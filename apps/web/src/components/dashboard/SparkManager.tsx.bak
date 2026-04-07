@@ -1,0 +1,119 @@
+"use client";
+
+import React, { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronUp, ChevronDown, LayoutGrid } from "lucide-react";
+import Link from "next/link";
+import HeroSpark from "./HeroSpark";
+import SparkQueue from "./SparkQueue";
+import StreakStatus from "./StreakStatus";
+
+import { Spark } from "@/types/spark";
+
+interface SparkControllerProps {
+  initialSparks: Spark[];
+}
+
+export default function SparkController({ initialSparks }: SparkControllerProps) {
+  const sortedSparks = useMemo(() => {
+    return [...initialSparks].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [initialSparks]);
+
+  const firstIncomplete = useMemo(
+    () => sortedSparks.find(s => s.uiStatus !== "completed") || sortedSparks[0],
+    [sortedSparks]
+  );
+
+  const [activeId, setActiveId] = useState<string | undefined>(firstIncomplete?.id);
+  const [currentPage, setCurrentPage] = useState(0);
+  const STACK_SIZE = 2;
+
+  useEffect(() => {
+    if (firstIncomplete?.id) setActiveId(firstIncomplete.id);
+  }, [firstIncomplete]);
+
+  const activeSpark = sortedSparks.find(s => s.id === activeId) || sortedSparks[0];
+  const queueSparks = sortedSparks.filter(s => s.id !== activeId);
+  const totalPages = Math.ceil(queueSparks.length / STACK_SIZE);
+  const paginatedSparks = queueSparks.slice(currentPage * STACK_SIZE, (currentPage + 1) * STACK_SIZE);
+
+  const handleNextPage = () => setCurrentPage(prev => (prev < totalPages - 1 ? prev + 1 : 0));
+  const handlePrevPage = () => setCurrentPage(prev => (prev > 0 ? prev - 1 : 0));
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 items-stretch h-auto lg:h-[520px]">
+      {/* HERO SPARK */}
+      <div className="flex-[7] h-[420px] lg:h-full relative overflow-hidden rounded-[48px]">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeId}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.5 }}
+            className="h-full w-full"
+          >
+            <HeroSpark data={activeSpark} className="h-full" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* SPARK QUEUE */}
+      <div className="flex-[3] flex flex-col h-full">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* HEADER */}
+          <div className="px-2 mb-4 flex justify-between items-center shrink-0">
+            <div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                Up Next
+              </h4>
+              <p className="text-[9px] font-bold text-[#24A5EE] uppercase mt-0.5">
+                Stack {currentPage + 1} of {totalPages || 1}
+              </p>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={handlePrevPage} disabled={currentPage === 0} className={`p-1.5 rounded-lg transition-all ${currentPage === 0 ? "opacity-20" : "bg-white shadow-sm hover:text-[#24A5EE]"}`}>
+                <ChevronUp size={14} />
+              </button>
+              <button onClick={handleNextPage} disabled={totalPages <= 1} className={`p-1.5 rounded-lg transition-all ${totalPages <= 1 ? "opacity-20" : "bg-white shadow-sm hover:text-[#24A5EE]"}`}>
+                <ChevronDown size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* QUEUE LIST */}
+          <div className="flex-1 overflow-hidden relative">
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="h-full flex flex-col gap-4"
+              >
+                <SparkQueue items={paginatedSparks} onSelect={setActiveId} />
+                <Link
+                  href="/dashboard/archive"
+                  className="w-full py-4 mt-auto rounded-[24px] border-2 border-dashed border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:border-[#24A5EE] hover:text-[#24A5EE] transition-all group shrink-0"
+                >
+                  <LayoutGrid size={14} className="group-hover:rotate-90 transition-transform" />
+                  Browse Full Catalogue
+                </Link>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* STREAK */}
+        <div className="mt-6 shrink-0">
+          <StreakStatus streakCount={14} isClaimed={false} />
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,159 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+import {
+    Settings,
+    Moon,
+    Sun,
+    Cloud,
+    Database,
+    ShieldCheck,
+    Globe,
+    Save,
+    Lock
+} from "lucide-react";
+
+export default function StudioSettings() {
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    // Derived from Auth session (mocked for now)
+    const adminRole = "SUPER_ADMIN";
+
+    // Prevent hydration mismatch by only rendering theme-dependent UI after mount
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+
+    return (
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F1117] p-8 ml-72 transition-colors duration-300 font-inter">
+            <div className="max-w-4xl mx-auto">
+
+                <header className="mb-10 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold font-poppins text-[#162B6E] dark:text-white">Studio Settings</h1>
+                        <p className="text-[#64748B] font-medium mt-1">Configure your workspace and system infrastructure.</p>
+                    </div>
+                    <button className="flex items-center gap-2 bg-[#162B6E] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-[#0F172A] active:scale-95 transition-all">
+                        <Save size={18} /> Save Changes
+                    </button>
+                </header>
+
+                <div className="space-y-8">
+
+                    {/* Section 1: Personal Preferences */}
+                    <section className="bg-white dark:bg-[#1F222A] rounded-[24px] border border-[#E2E8F0] dark:border-[#2A2E39] overflow-hidden shadow-premium">
+                        <div className="p-6 border-b border-[#E2E8F0] dark:border-[#2A2E39] bg-[#F8FAFC] dark:bg-[#181A20]">
+                            <h3 className="font-bold text-[#162B6E] dark:text-white flex items-center gap-2">
+                                <Settings size={18} className="text-[#24A5EE]" /> Workspace Preferences
+                            </h3>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-bold text-sm text-[#162B6E] dark:text-white">Studio Theme</p>
+                                    <p className="text-xs text-[#64748B]">Switch between Heritage (Light) and Midnight (Dark) modes.</p>
+                                </div>
+                                <div className="flex items-center gap-2 bg-[#F1F5F9] dark:bg-[#2A2E39] p-1 rounded-full border border-[#E2E8F0] dark:border-[#3F4451]">
+                                    <button
+                                        onClick={() => setTheme("light")}
+                                        className={`p-2 rounded-full transition-all ${theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-[#64748B]'}`}
+                                    >
+                                        <Sun size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setTheme("dark")}
+                                        className={`p-2 rounded-full transition-all ${theme === 'dark' ? 'bg-[#162B6E] shadow-sm text-blue-400' : 'text-[#64748B]'}`}
+                                    >
+                                        <Moon size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Notifications Toggle (UI Mockup) */}
+                            <div className="flex items-center justify-between opacity-50">
+                                <div>
+                                    <p className="font-bold text-sm text-[#162B6E] dark:text-white">Desktop Notifications</p>
+                                    <p className="text-xs text-[#64748B]">Get alerts for student activity and curriculum milestones.</p>
+                                </div>
+                                <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded-full relative cursor-not-allowed">
+                                    <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Section 2: Infrastructure (Super-Admin Only) */}
+                    {adminRole === "SUPER_ADMIN" && (
+                        <section className="bg-white dark:bg-[#1F222A] rounded-[24px] border border-[#24A5EE]/30 dark:border-[#24A5EE]/20 overflow-hidden shadow-premium relative">
+                            <div className="absolute top-0 right-0 p-4">
+                                <Lock size={16} className="text-[#24A5EE] opacity-40" />
+                            </div>
+                            <div className="p-6 border-b border-[#E2E8F0] dark:border-[#2A2E39] bg-[#EFF6FF] dark:bg-[#162B6E]/20">
+                                <h3 className="font-bold text-[#162B6E] dark:text-[#24A5EE] flex items-center gap-2">
+                                    <ShieldCheck size={18} /> System Infrastructure
+                                </h3>
+                            </div>
+
+                            <div className="p-8 space-y-8">
+                                <div>
+                                    <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest block mb-3">Asset Storage (Cloudinary/S3)</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-bold text-[#162B6E] dark:text-white">API Key</p>
+                                            <input type="password" value="************************" className="w-full bg-[#F8FAFC] dark:bg-[#181A20] border border-[#E2E8F0] dark:border-[#2A2E39] p-3 rounded-xl text-sm outline-none focus:ring-1 focus:ring-[#24A5EE]" readOnly />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-bold text-[#162B6E] dark:text-white">Environment</p>
+                                            <div className="w-full bg-[#F8FAFC] dark:bg-[#181A20] border border-[#E2E8F0] dark:border-[#2A2E39] p-3 rounded-xl text-sm flex items-center justify-between text-[#16A34A] font-bold">
+                                                Production <Cloud size={14} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-[#64748B] uppercase tracking-widest block mb-3">Database Connection (Prisma)</label>
+                                    <div className="p-4 bg-[#F8FAFC] dark:bg-[#181A20] rounded-xl border border-[#E2E8F0] dark:border-[#2A2E39] flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Database size={20} className="text-[#24A5EE]" />
+                                            <div>
+                                                <p className="text-sm font-bold text-[#162B6E] dark:text-white">PostgreSQL Cluster</p>
+                                                <p className="text-[10px] text-[#64748B]">Latency: 14ms | Status: Optimal</p>
+                                            </div>
+                                        </div>
+                                        <button className="text-xs font-black text-[#24A5EE] hover:underline uppercase transition-all">Sync Schema</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Regional Settings */}
+                    <section className="bg-white dark:bg-[#1F222A] rounded-[24px] border border-[#E2E8F0] dark:border-[#2A2E39] overflow-hidden shadow-premium">
+                        <div className="p-6 border-b border-[#E2E8F0] dark:border-[#2A2E39] bg-[#F8FAFC] dark:bg-[#181A20]">
+                            <h3 className="font-bold text-[#162B6E] dark:text-white flex items-center gap-2">
+                                <Globe size={18} className="text-[#24A5EE]" /> Regional & Linguistic
+                            </h3>
+                        </div>
+                        <div className="p-8">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-bold text-sm text-[#162B6E] dark:text-white">Primary Target Language</p>
+                                    <p className="text-xs text-[#64748B]">The core heritage focus for all curriculum modules.</p>
+                                </div>
+                                <div className="font-black text-[#162B6E] dark:text-white bg-[#EFF6FF] dark:bg-[#162B6E]/30 px-4 py-2 rounded-lg border border-[#24A5EE]/20 tracking-widest text-sm">
+                                    YORÙBÁ
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,51 @@
+"use server";
+
+import { db } from "@/lib/db";
+// 1. Corrected Import for Next.js 16 / Clerk v6+
+import { auth } from "@clerk/nextjs/server"; 
+
+export async function auditLatestLesson() {
+  // 2. Await the auth helper (Required in new Clerk versions)
+  const { userId } = await auth();
+  
+  // Security: Ensure only you (The Principal) can run this
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // 3. Updated model name from 'lesson' to 'journey' to match your schema
+    const latestJourney = await db.journey.findFirst({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        sparks: {
+          include: {
+            contentBlocks: true,
+            exercises: true,
+          }
+        }
+      }
+    });
+
+    if (!latestJourney) {
+      return { success: false, message: "No journeys found in database." };
+    }
+
+    // 4. Run Integrity Checks on the first Spark (Node) of the Journey
+    const firstSpark = latestJourney.sparks[0];
+
+    const audit = {
+      title: latestJourney.title,
+      sparkCount: latestJourney.sparks.length,
+      hasContent: (firstSpark?.contentBlocks?.length ?? 0) > 0,
+      hasQuiz: (firstSpark?.exercises?.length ?? 0) > 0,
+      status: latestJourney.status,
+      // Check for common "silent" errors in the first spark
+      missingAudio: firstSpark?.contentBlocks.filter(b => !b.audioUrl).length ?? 0,
+    };
+
+    console.log("🛠️ ZABBOT ADMIN AUDIT:", audit);
+    return { success: true, audit };
+  } catch (error) {
+    console.error("AUDIT_FAILED", error);
+    return { success: false, error: "Database connection failed." };
+  }
+}

@@ -1,0 +1,134 @@
+"use client";
+
+import React from "react";
+import { motion } from "framer-motion";
+import {
+    Globe,
+    BookOpen,
+    Zap,
+    BarChart3,
+    Layers,
+    Users
+} from "lucide-react";
+
+// --- Metrics focused on Global EdTech & Language Growth ---
+const metrics = [
+    { label: "Ecosystem Revenue", value: "$12,400", change: "+15%", subtitle: "Platform Growth" },
+    { label: "Active Learners", value: "8,420", change: "+124", subtitle: "Knowledge Spread" },
+    { label: "Lesson Completions", value: "12.5k", change: "+18%", subtitle: "Retention Rate" },
+    { label: "Archive Access", value: "450", change: "Stable", subtitle: "Premium Tier" },
+];
+
+export default function ZabbotRevenue() {
+    return (
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F1117] p-8 ml-72 transition-colors duration-500">
+            <div className="max-w-7xl mx-auto">
+
+                {/* Header: Focused on Heritage & Growth */}
+                <header className="mb-12 flex justify-between items-start">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2 text-[#24A5EE]">
+                            <Globe size={14} className="animate-spin-slow" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Global Impact Monitor</span>
+                        </div>
+                        <h1 className="text-3xl font-bold dark:text-white text-[#162B6E] font-poppins tracking-tight">Financial Intelligence</h1>
+                        <p className="text-[#64748B] text-sm mt-1">Tracking the economic health of the Yorùbá learning ecosystem.</p>
+                    </div>
+
+                    <div className="flex bg-[#1F222A] p-1 rounded-2xl border border-[#2A2E39]">
+                        {['Daily', 'Weekly', 'Monthly'].map((tab) => (
+                            <button key={tab} className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-[#64748B] hover:text-white transition-all rounded-xl hover:bg-[#2A2E39]">
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </header>
+
+                {/* The "Vault" Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    {metrics.map((m, i) => (
+                        <motion.div
+                            key={m.label}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="bg-[#1F222A] border border-[#2A2E39] p-7 rounded-[28px] hover:border-[#24A5EE]/50 transition-all group cursor-default"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-[#0F1117] rounded-2xl border border-[#2A2E39] group-hover:text-[#24A5EE] group-hover:border-[#24A5EE]/30 transition-colors">
+                                    {i === 0 ? <Zap size={18} /> : i === 1 ? <Users size={18} /> : <BookOpen size={18} />}
+                                </div>
+                                <span className="text-[10px] font-black text-green-400 bg-green-400/10 px-2 py-1 rounded-lg">
+                                    {m.change}
+                                </span>
+                            </div>
+                            <h3 className="text-2xl font-black text-white mb-1 tracking-tight">{m.value}</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#64748B]">{m.label}</p>
+                            <p className="text-[9px] text-[#24A5EE] mt-2 font-medium">{m.subtitle}</p>
+                        </motion.div>
+                    ))}
+                </div>
+
+                {/* Analytical Section */}
+                <div className="grid grid-cols-12 gap-8">
+                    {/* Revenue Streams Chart */}
+                    <div className="col-span-12 lg:col-span-7 bg-[#1F222A] border border-[#2A2E39] rounded-[32px] p-8 shadow-2xl">
+                        <div className="flex justify-between items-center mb-10">
+                            <h3 className="text-white font-bold flex items-center gap-3">
+                                <BarChart3 size={18} className="text-[#24A5EE]" />
+                                Subscription Inflow
+                            </h3>
+                            <button className="text-[10px] font-black text-[#64748B] border border-[#2A2E39] px-4 py-2 rounded-xl hover:bg-[#2A2E39] transition-colors">Download TSV</button>
+                        </div>
+
+                        <div className="h-[300px] flex items-end justify-between gap-4">
+                            {[60, 40, 80, 50, 90, 70, 100].map((h, i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
+                                    <motion.div
+                                        initial={{ height: 0 }}
+                                        animate={{ height: `${h}%` }}
+                                        className="w-full bg-[#24A5EE]/20 rounded-t-xl group-hover:bg-[#24A5EE] transition-all relative overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#24A5EE]/40 to-transparent rounded-t-xl" />
+                                    </motion.div>
+                                    <span className="text-[9px] font-black text-[#64748B] uppercase">Day {i + 1}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Distribution Panel */}
+                    <div className="col-span-12 lg:col-span-5 bg-[#1F222A] border border-[#2A2E39] rounded-[32px] p-8">
+                        <h3 className="text-white font-bold mb-8 flex items-center gap-3">
+                            <Layers size={18} className="text-[#24A5EE]" />
+                            Revenue Distribution
+                        </h3>
+                        <div className="space-y-6">
+                            {[
+                                { name: 'Heritage Pro', share: '65%', color: 'bg-[#24A5EE]' },
+                                { name: 'Linguistic Lab', share: '25%', color: 'bg-white' },
+                                { name: 'Archive Access', share: '10%', color: 'bg-[#64748B]' }
+                            ].map((item) => (
+                                <div key={item.name}>
+                                    <div className="flex justify-between text-[10px] font-black uppercase text-white mb-2">
+                                        <span>{item.name}</span>
+                                        <span>{item.share}</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-[#0F1117] rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: item.share }}
+                                            transition={{ duration: 1, ease: "easeOut" }}
+                                            className={`h-full ${item.color}`}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,27 @@
+"use server";
+
+import { db } from "@/lib/db";
+
+export async function getTodaysWord() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+        const wordEntry = await db.todaysWord.findUnique({
+            where: { displayDate: today }
+        });
+
+        if (!wordEntry) {
+            return {
+                word: "Àlàáfíà",
+                phonetic: "/a-la-fi-a/",
+                meaning: "Peace, health, and well-being. The standard Yorùbá greeting for wellness."
+            };
+        }
+
+        return wordEntry;
+    } catch (error) {
+        console.error("Failed to fetch daily word:", error);
+        return null;
+    }
+}

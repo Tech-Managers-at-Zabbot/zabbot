@@ -1,0 +1,75 @@
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
+import SparkForm from "@/components/admin/SparkForm";
+import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
+
+export default async function EditSparkPage({ params }: { params: { id: string } }) {
+    // 1. Fetch using Prisma to ensure Type Safety with SparkForm
+    const spark = await db.spark.findUnique({
+        where: { id: params.id },
+        include: {
+            contentBlocks: {
+                orderBy: { order: 'asc' }
+            },
+            // We include exercises just in case SparkForm needs them, 
+            // though your previous logic focused on 'nodes' (contentBlocks)
+            exercises: true 
+        }
+    });
+
+    if (!spark) notFound();
+
+    /**
+     * Data Normalization:
+     * Mapping Prisma's model structure to the 'initialData' 
+     * shape your SparkForm expects.
+     */
+    const initialData = {
+        id: spark.id,
+        title: spark.title,
+        description: spark.description || "",
+        imageThumbnail: spark.imageThumbnail || "",
+        timeEstimate: spark.timeEstimate || 5,
+        xpReward: spark.xpReward || 50,
+        isPublished: spark.isPublished,
+        slug: spark.slug,
+        proverb_yoruba: spark.proverb_yoruba || "",
+        proverb_english: spark.proverb_english || "",
+        honorific_rule: spark.honorific_rule || "",
+        // Mapping contentBlocks back to the 'nodes' array used in the form
+        nodes: spark.contentBlocks.map(block => ({
+            yoruba: block.yoruba,
+            english: block.english,
+            audio: block.audioUrl || "",
+            grammar: "" // Placeholder if grammar notes aren't in contentBlocks
+        }))
+    };
+
+    return (
+        <div className="p-8 lg:p-12 max-w-5xl mx-auto min-h-screen">
+            {/* Navigation Header */}
+            <Link 
+                href="/admin/archive" 
+                className="group flex items-center gap-2 text-[#24A5EE] font-black text-[10px] uppercase tracking-widest mb-6"
+            >
+                <ChevronLeft size={14} className="group-hover:translate-x-[-4px] transition-transform" /> 
+                Back to Archive
+            </Link>
+
+            <div className="mb-10">
+                <h1 className="text-5xl font-black text-[#162B6E] tracking-tighter italic">Edit Spark</h1>
+                <p className="text-slate-400 font-bold mt-2 uppercase text-[10px] tracking-[0.2em]">
+                    Modifying: <span className="text-[#24A5EE]">{spark.title}</span>
+                </p>
+            </div>
+
+            <div className="bg-white rounded-[48px] p-8 lg:p-12 border border-slate-100 shadow-xl">
+                {/* SparkForm now receives a fully typed Prisma-aligned object.
+                  Ensure SparkForm handles the 'id' correctly for the update action!
+                */}
+                <SparkForm initialData={initialData} mode="edit" />
+            </div>
+        </div>
+    );
+}

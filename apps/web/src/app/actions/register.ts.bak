@@ -1,0 +1,27 @@
+"use server";
+import { db } from "@/lib/db"; 
+
+export async function registerUser(formData: FormData) {
+    const email = formData.get("email") as string;
+    const name = formData.get("name") as string;
+    const clerkId = formData.get("clerkId") as string; // Retrieve the Clerk ID
+
+    if (!email || !clerkId) return { error: "Missing required fields" };
+
+    // Check if user exists
+    const existingUser = await db.user.findUnique({ where: { email } });
+    if (existingUser) return { error: "User already exists" };
+
+    // Create the user in PostgreSQL
+    await db.user.create({
+        data: {
+            email,
+            name,
+            clerkId, // This fixes the "Property 'clerkId' is missing" error
+            xp: 0, 
+            status: "Active",
+        },
+    });
+
+    return { success: "Profile synced successfully!" };
+}

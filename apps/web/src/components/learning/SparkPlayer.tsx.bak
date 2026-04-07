@@ -1,0 +1,232 @@
+'use client';
+
+import { useState } from 'react';
+import { Progress } from "@/components/ui/Progress";
+import { Button } from "@/components/ui/Button";
+import { CheckCircle2, XCircle, Heart, Trophy, ArrowRight } from "lucide-react";
+
+type SparkStage = 'WELCOME' | 'IMMERSION' | 'GRAMMAR' | 'PROVERB' | 'SUMMARY' | 'PRACTICE' | 'SUCCESS';
+
+// 1. Updated Interface: Now accepts onClose from the Dashboard
+export default function SparkPlayer({
+    lesson,
+    onClose
+}: {
+    lesson: any,
+    onClose: () => void
+}) {
+    const [stage, setStage] = useState<SparkStage>('WELCOME');
+    const [stepProgress, setStepProgress] = useState(10);
+    const [hearts, setHearts] = useState(5);
+    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+
+    const questions = [
+        {
+            question: "Which word matches the audio you just heard?",
+            options: ["Ẹ kú àárọ̀", "O dáàbọ̀", "Ẹ lẹ́mìí gígùn"],
+            answer: "Ẹ kú àárọ̀",
+        },
+        {
+            question: "You are greeting an elder. Which prefix is mandatory?",
+            options: ["O", "Ẹ", "Kò sí"],
+            answer: "Ẹ",
+        }
+    ];
+
+    const nextStage = (next: SparkStage, progress: number) => {
+        setStage(next);
+        setStepProgress(progress);
+    };
+
+    const handleCheck = () => {
+        const correct = selectedAnswer === questions[currentQuestion].answer;
+        setIsCorrect(correct);
+        if (!correct) setHearts(prev => Math.max(0, prev - 1));
+    };
+
+    const handleNextQuestion = () => {
+        if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(prev => prev + 1);
+            setSelectedAnswer(null);
+            setIsCorrect(null);
+        } else {
+            nextStage('SUCCESS', 100);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="relative w-full max-w-4xl h-[85vh] bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+
+                {/* Header */}
+                <div className="p-6 border-b flex items-center justify-between bg-white">
+                    <div className="w-2/3">
+                        <p className="text-xs font-black text-[#24A5EE] uppercase tracking-[0.2em] mb-1">Spark: {lesson.title}</p>
+                        <Progress value={stepProgress} className="h-2 bg-slate-100" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 text-red-500 font-bold">
+                            <Heart size={18} fill="currentColor" /> {hearts}
+                        </div>
+                        {/* 2. UPDATE: Uses the onClose prop instead of browser history */}
+                        <Button
+                            variant="ghost"
+                            onClick={onClose}
+                            className="hover:bg-slate-100 rounded-full w-10 h-10 p-0 text-slate-400 hover:text-slate-900"
+                        >
+                            ✕
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-8 bg-slate-50/30">
+
+                    {/* 1. WELCOME */}
+                    {stage === 'WELCOME' && (
+                        <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500 max-w-xl mx-auto py-10">
+                            <h1 className="text-4xl font-black text-[#162B6E] font-poppins">Ẹ kú àbọ̀!</h1>
+                            <p className="text-xl text-slate-500">Ready for your 10-minute immersion into "{lesson.title}"?</p>
+                            <div className="py-6">
+                                <img src={lesson.imageThumbnail || "/placeholder-spark.png"} alt="Welcome" className="mx-auto rounded-[2rem] w-72 h-72 object-cover shadow-2xl border-8 border-white" />
+                            </div>
+                            <Button size="lg" className="bg-[#24A5EE] hover:bg-[#1d89c7] px-12 h-14 rounded-2xl text-lg shadow-lg font-bold" onClick={() => nextStage('IMMERSION', 30)}>
+                                Start Immersion
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* 2. IMMERSION */}
+                    {stage === 'IMMERSION' && (
+                        <div className="space-y-8 text-center animate-in slide-in-from-right duration-500">
+                            <h2 className="text-3xl font-bold text-[#162B6E]">Listen & Visualize</h2>
+                            <div className="flex justify-center">
+                                <div className="p-10 bg-white border-2 border-slate-100 rounded-[2rem] shadow-xl hover:border-[#24A5EE] transition-all cursor-pointer group w-full max-w-sm">
+                                    <div className="aspect-square bg-sky-50 rounded-2xl mb-6 flex items-center justify-center">
+                                        <span className="text-6xl group-hover:scale-110 transition-transform">🔊</span>
+                                    </div>
+                                    <p className="text-3xl font-black text-[#162B6E] mb-2">{lesson.vocabulary?.[0]?.yorubaWord || "Ẹ kú àárọ̀"}</p>
+                                    <p className="text-xl text-slate-500 italic">{lesson.vocabulary?.[0]?.englishTranslation || "Good morning"}</p>
+                                </div>
+                            </div>
+                            <Button size="lg" className="bg-[#162B6E] px-10 h-14 rounded-xl font-bold" onClick={() => nextStage('GRAMMAR', 50)}>
+                                Understand the Rule <ArrowRight className="ml-2" size={20} />
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* 3. GRAMMAR */}
+                    {stage === 'GRAMMAR' && (
+                        <div className="max-w-2xl mx-auto space-y-8 animate-in slide-in-from-right duration-500">
+                            <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border-t-8 border-[#24A5EE]">
+                                <h3 className="text-[#24A5EE] font-black uppercase text-xs tracking-widest mb-4">Grammar Rule</h3>
+                                <h2 className="text-4xl font-black text-[#162B6E] mb-6">Honorifics & Respect</h2>
+                                <p className="text-xl leading-relaxed text-slate-700">
+                                    In Yorùbá culture, we use <span className="bg-sky-100 px-2 py-1 rounded font-bold text-[#24A5EE]">"Ẹ"</span> to address elders or those in authority.
+                                    It is a linguistic reflection of <span className="italic font-semibold">Ìwà</span> (Character).
+                                </p>
+                            </div>
+                            <Button size="lg" className="w-full h-16 bg-[#162B6E] text-lg rounded-2xl font-bold" onClick={() => nextStage('PROVERB', 70)}>
+                                View Heritage Wisdom
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* 4. PROVERB */}
+                    {stage === 'PROVERB' && (
+                        <div className="max-w-2xl mx-auto text-center space-y-8 animate-in slide-in-from-right duration-500">
+                            <div className="bg-[#162B6E] text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-4 right-6 text-6xl opacity-20 font-serif">"</div>
+                                <h3 className="text-sky-300 font-bold uppercase text-xs tracking-widest mb-4">Ọ̀rọ̀ Àgbà (Proverb)</h3>
+                                <p className="text-3xl font-medium leading-tight mb-6">"Ìwà lẹwà ọmọ ènìyàn."</p>
+                                <div className="h-px bg-white/20 w-1/2 mx-auto mb-6"></div>
+                                <p className="text-lg text-sky-100 italic">"Character is the true beauty of a person."</p>
+                            </div>
+                            <Button size="lg" className="bg-[#24A5EE] w-full h-16 rounded-2xl text-lg font-bold" onClick={() => nextStage('PRACTICE', 85)}>
+                                Start Practice Time
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* 5. PRACTICE */}
+                    {stage === 'PRACTICE' && (
+                        <div className="max-w-xl mx-auto space-y-8 animate-in slide-in-from-bottom-4">
+                            <div className="text-center">
+                                <h2 className="text-2xl font-black text-[#162B6E] mb-8">{questions[currentQuestion].question}</h2>
+                                <div className="grid gap-4">
+                                    {questions[currentQuestion].options.map((option) => (
+                                        <button
+                                            key={option}
+                                            disabled={isCorrect !== null}
+                                            onClick={() => setSelectedAnswer(option)}
+                                            className={`p-6 rounded-2xl border-2 text-lg font-bold transition-all ${selectedAnswer === option
+                                                ? 'border-[#24A5EE] bg-sky-50 text-[#24A5EE]'
+                                                : 'border-slate-100 bg-white hover:border-slate-300 text-slate-700 shadow-sm'
+                                                }`}
+                                        >
+                                            {option}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {selectedAnswer && isCorrect === null && (
+                                <Button className="w-full h-16 bg-[#162B6E] text-xl rounded-2xl mt-6 font-bold" onClick={handleCheck}>
+                                    Check Answer
+                                </Button>
+                            )}
+
+                            {isCorrect !== null && (
+                                <div className={`p-6 rounded-3xl flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-10 ${isCorrect ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                                    <div className="flex items-center gap-4">
+                                        {isCorrect ? <CheckCircle2 size={32} /> : <XCircle size={32} />}
+                                        <div>
+                                            <p className="font-black text-lg">{isCorrect ? 'O gba bẹ́ẹ̀!' : 'Try again!'}</p>
+                                            <p className="text-sm opacity-90">{isCorrect ? 'Correct Answer' : 'Focus on the honorifics'}</p>
+                                        </div>
+                                    </div>
+                                    <Button onClick={handleNextQuestion} variant="secondary" className="font-bold">
+                                        Continue
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 6. SUCCESS STATE */}
+                    {stage === 'SUCCESS' && (
+                        <div className="text-center space-y-8 py-10 animate-in zoom-in duration-700">
+                            <div className="relative inline-block">
+                                <Trophy size={120} className="text-[#FACC15] mx-auto drop-shadow-xl" />
+                                <div className="absolute -top-2 -right-2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg uppercase tracking-tighter">
+                                    Complete
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-4xl font-black text-[#162B6E]">Spark Ignited!</h2>
+                                <p className="text-xl text-slate-500 font-medium">You just earned <span className="text-orange-500 font-black">{lesson.xpReward || 50} XP</span></p>
+                            </div>
+                            <div className="bg-slate-50 p-6 rounded-[2rem] max-w-xs mx-auto flex justify-between border-2 border-slate-100">
+                                <div className="text-center">
+                                    <p className="text-[10px] uppercase text-slate-400 font-black mb-1">Hearts</p>
+                                    <p className="text-2xl font-black text-red-500">{hearts}/5</p>
+                                </div>
+                                <div className="w-px bg-slate-200"></div>
+                                <div className="text-center">
+                                    <p className="text-[10px] uppercase text-slate-400 font-black mb-1">Streak</p>
+                                    <p className="text-2xl font-black text-orange-500">+1 Day</p>
+                                </div>
+                            </div>
+                            {/* 3. UPDATE: Finish button now triggers onClose to return to Dashboard */}
+                            <Button size="lg" className="bg-[#162B6E] h-16 px-12 rounded-2xl text-xl shadow-xl w-full max-w-sm font-black" onClick={onClose}>
+                                Finish & Claim Reward
+                            </Button>
+                        </div>
+                    )}
+
+                </div>
+            </div>
+        </div>
+    );
+}

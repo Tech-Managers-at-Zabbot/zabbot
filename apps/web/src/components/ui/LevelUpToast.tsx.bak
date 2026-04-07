@@ -1,0 +1,31 @@
+'use client';
+
+import { useEffect } from 'react';
+import { triggerMilestoneConfetti } from '@/lib/celebrations';
+import { Trophy } from 'lucide-react';
+
+interface LevelUpProps {
+    newTitle: string;
+    level: number;
+}
+
+export default function LevelUpToast({ newTitle, level }: LevelUpProps) {
+    useEffect(() => {
+        triggerMilestoneConfetti();
+    }, []);
+
+    return (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-10 duration-500">
+            <div className="bg-[#162B6E] text-white p-6 rounded-[2rem] border-4 border-[#FACC15] shadow-2xl flex items-center gap-6 min-w-[320px]">
+                <div className="bg-[#FACC15] p-3 rounded-full">
+                    <Trophy className="text-[#162B6E]" size={32} />
+                </div>
+                <div>
+                    <p className="text-[#24A5EE] font-black text-xs uppercase tracking-widest">Level Up!</p>
+                    <h3 className="text-xl font-bold">You are now a {newTitle}</h3>
+                    <p className="text-slate-400 text-sm">Level {level} reached</p>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,9 @@
+cat <<EOF > .gitignore
+node_modules
+.next
+.env
+dist
+build
+.turbo
+*.log
+*.db

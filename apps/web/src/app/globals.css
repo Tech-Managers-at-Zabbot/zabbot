@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/* =========================
+   🎨 DESIGN TOKENS
+========================= */
+@theme {
+  /* Typography */
+  --font-heading: "Lexend", sans-serif;
+  --font-ui: "Lexend", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Brand Colors */
+  --color-heritage: #162B6E;
+  --color-learning: #24A5EE;
+  --color-soft-bg: #F8FAFC;
+  --color-xp: #FACC15;
+  --color-success: #16A34A;
+  --color-error: #EF4444;
+
+  /* Glass System */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Radius & Shadows */
+  --radius-zabbot: 28px;
+  --shadow-premium: 0 10px 40px rgba(0,0,0,0.06);
+  --shadow-strong: 0 20px 60px rgba(0,0,0,0.08);
+  --shadow-ai-glow: 0 0 25px rgba(36,165,238,0.2);
+}
+
+/* =========================
+   🌍 BASE LAYER
+========================= */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply text-[#0F172A] font-body antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+    background: transparent;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+/* =========================
+   🌈 BACKGROUND SYSTEM (CRITICAL)
+========================= */
+.zabbot-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background: linear-gradient(
+    135deg,
+    #f8fafc 0%,
+    #eef2ff 40%,
+    #e0f2fe 100%
+  );
+}
+
+/* Dark Mode Background */
+.dark .zabbot-bg {
+  background: linear-gradient(
+    135deg,
+    #020617 0%,
+    #0f172a 40%,
+    #020617 100%
+  );
+}
+
+/* Floating Glow Blobs */
+.zabbot-blob {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  filter: blur(120px);
+  opacity: 0.35;
+  border-radius: 50%;
+  animation: float 20s infinite alternate ease-in-out;
+}
+
+.zabbot-blob-blue {
+  background: #60a5fa;
+  top: -120px;
+  left: -120px;
+}
+
+.zabbot-blob-purple {
+  background: #a78bfa;
+  bottom: -120px;
+  right: -80px;
+}
+
+/* =========================
+   🧊 GLASS SYSTEM (UPGRADED)
+========================= */
+
+/* Base Glass */
+.zabbot-glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-zabbot);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-premium);
+  transition: all 0.4s ease;
+}
+
+/* Strong Glass (Primary Focus Cards) */
+.zabbot-glass-strong {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: var(--shadow-strong);
+}
+
+/* Dark Mode Glass */
+.dark .zabbot-glass-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dark .zabbot-glass-strong {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Glass Highlight Edge (Luxury feel) */
+.glass-shiny-edge {
+  position: relative;
+}
+.glass-shiny-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border-top: 1px solid rgba(255,255,255,0.6);
+  border-left: 1px solid rgba(255,255,255,0.6);
+  pointer-events: none;
+}
+
+/* =========================
+   🎬 ANIMATIONS
+========================= */
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 100px) scale(1.2); }
+  100% { transform: translate(-40px, 40px) scale(0.9); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite linear;
+}
+
+/* XP Glow Effect */
+.xp-glow {
+  box-shadow: 0 0 20px rgba(250,204,21,0.5);
+}
+
+/* AI Glow Effect */
+.ai-glow {
+  box-shadow: var(--shadow-ai-glow);
+}
+
+/* =========================
+   🧭 SCROLLBAR (PREMIUM)
+========================= */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(22, 43, 110, 0.2);
+  border-radius: 999px;
+}

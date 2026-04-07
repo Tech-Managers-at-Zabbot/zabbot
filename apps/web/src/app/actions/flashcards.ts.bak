@@ -1,0 +1,128 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
+
+/** SRS Interval Calculation Helper */
+function calculateNextReview(currentLevel: number, performance: "easy" | "good" | "hard") {
+  const nextReview = new Date();
+  switch (performance) {
+    case "easy":
+      nextReview.setDate(nextReview.getDate() + (currentLevel + 1) * 3); // exponential growth
+      break;
+    case "hard":
+      nextReview.setMinutes(nextReview.getMinutes() + 10); // immediate re-learning
+      break;
+    case "good":
+      nextReview.setDate(nextReview.getDate() + 1); // review next day
+      break;
+  }
+  return nextReview;
+}
+
+/** 1. Sync flashcards from lesson */
+export async function createFlashcardsFromLesson(sparkId: string) {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) throw new Error("Unauthorized");
+
+  try {
+    const user = await db.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    const vocabItems = await db.vocabulary.findMany({
+      where: { sparkId },
+      include: { spark: { select: { title: true } } },
+    });
+
+    if (!vocabItems.length) return { success: true, count: 0 };
+
+    // Upsert all flashcards atomically
+    await db.$transaction(
+      vocabItems.map((vocab) =>
+        db.flashcard.upsert({
+          where: {
+            user_flashcard_id: {
+              userId: user.id,
+              back: vocab.yorubaWord,
+            },
+          },
+          update: {
+            sourceLesson: vocab.spark?.title || "Language Mastery",
+          },
+          create: {
+            userId: user.id,
+            front: vocab.englishTranslation,
+            back: vocab.yorubaWord,
+            sourceLesson: vocab.spark?.title || "Language Mastery",
+            nextReview: new Date(),
+            masteryLevel: 0,
+          },
+        })
+      )
+    );
+
+    // Revalidate Next.js cache safely
+    try {
+      revalidatePath("/dashboard/flashcards");
+      revalidatePath("/dashboard/learn");
+    } catch (err) {
+      console.warn("CACHE_REVALIDATION_WARNING:", err);
+    }
+
+    return { success: true, count: vocabItems.length };
+  } catch (error) {
+    console.error("FLASHCARD_SYNC_ERROR:", error instanceof Error ? error.message : error);
+    return { success: false, error: "Failed to sync flashcards" };
+  }
+}
+
+/** 2. Update flashcard mastery (SRS) */
+export async function updateFlashcardMastery(
+  cardId: string,
+  performance: "easy" | "good" | "hard"
+) {
+  const { userId: clerkId } = await auth();
+  if (!clerkId) throw new Error("Unauthorized");
+
+  try {
+    const currentCard = await db.flashcard.findUnique({
+      where: { id: cardId },
+      select: { id: true, masteryLevel: true },
+    });
+
+    if (!currentCard) throw new Error("Card not found");
+
+    const nextReview = calculateNextReview(currentCard.masteryLevel, performance);
+    const newLevel =
+      performance === "easy"
+        ? currentCard.masteryLevel + 1
+        : performance === "hard"
+          ? Math.max(0, currentCard.masteryLevel - 1)
+          : currentCard.masteryLevel;
+
+    await db.flashcard.update({
+      where: { id: cardId },
+      data: {
+        masteryLevel: newLevel,
+        nextReview,
+        lastReviewed: new Date(),
+      },
+    });
+
+    try {
+      revalidatePath("/dashboard/flashcards");
+    } catch (err) {
+      console.warn("CACHE_REVALIDATION_WARNING:", err);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("MASTERY_UPDATE_ERROR:", error instanceof Error ? error.message : error);
+    return { success: false, error: "Progress not saved" };
+  }
+}

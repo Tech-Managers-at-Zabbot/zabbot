@@ -1,0 +1,245 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { 
+  Plus, Trash2, Mic, ImageIcon, Globe, Loader2, 
+  CheckCircle2, ArrowRight, Eye, Edit3, Music, X, Save, Zap, Database, Library
+} from "lucide-react";
+import { CldUploadWidget } from 'next-cloudinary';
+import { createFullSpark } from "../actions/spark-actions";
+import { AdminInput, AdminTextArea } from "@/components/admin/StudioUI";
+import Link from "next/link";
+
+export default function SparksStudio() {
+  const [isPending, setIsPending] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  // SCHEMA ALIGNED STATE
+  const [identity, setIdentity] = useState({
+    title: "", 
+    imageThumbnail: "", 
+    timeEstimate: 5, 
+    xpReward: 50,
+    description: "", 
+    category: "SPARK",
+    honorific_rule: "", 
+    proverb_yoruba: "", 
+    proverb_english: ""
+  });
+  
+  const [nodes, setNodes] = useState([{ yoruba: "", english: "", audio: "", grammar: "" }]);
+
+  // --- PERSISTENCE ---
+  useEffect(() => {
+    const savedId = localStorage.getItem("zabbot_spark_identity_v2");
+    const savedNodes = localStorage.getItem("zabbot_spark_nodes_v2");
+    if (savedId && savedNodes) {
+      setIdentity(JSON.parse(savedId));
+      setNodes(JSON.parse(savedNodes));
+      setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (identity.title || nodes[0].yoruba) {
+      localStorage.setItem("zabbot_spark_identity_v2", JSON.stringify(identity));
+      localStorage.setItem("zabbot_spark_nodes_v2", JSON.stringify(nodes));
+      setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }
+  }, [identity, nodes]);
+
+  const handleRelease = async () => {
+    setIsPending(true);
+    const formData = new FormData();
+    
+    // Ensure numbers are strings for FormData
+    Object.entries(identity).forEach(([key, value]) => formData.append(key, String(value)));
+    formData.append("nodes_data", JSON.stringify(nodes));
+    
+    try {
+      const result = await createFullSpark(null, formData);
+      if (result.success) {
+        setShowSuccess(true);
+        localStorage.removeItem("zabbot_spark_identity_v2");
+        localStorage.removeItem("zabbot_spark_nodes_v2");
+        setIdentity({ 
+          title: "", imageThumbnail: "", timeEstimate: 5, xpReward: 50, 
+          description: "", category: "SPARK", honorific_rule: "", 
+          proverb_yoruba: "", proverb_english: "" 
+        });
+        setNodes([{ yoruba: "", english: "", audio: "", grammar: "" }]);
+        setIsPreview(false);
+        setTimeout(() => setShowSuccess(false), 5000);
+      }
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  if (isPreview) return <PreviewScreen identity={identity} nodes={nodes} onEdit={() => setIsPreview(false)} onPublish={handleRelease} isPending={isPending} />;
+
+  return (
+    <main className="relative flex-1 min-h-screen bg-[#F8FAFC] p-6 lg:p-12 overflow-y-auto transition-all duration-300">
+      {showSuccess && (
+        <div className="fixed top-10 right-10 z-[100] bg-[#16A34A] text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-right font-black uppercase text-[10px] tracking-widest">
+          <CheckCircle2 size={20} /> Spark Released to Students
+        </div>
+      )}
+
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6">
+        <div>
+          <h1 className="text-5xl font-black text-[#162B6E] tracking-tighter italic">Sparks Studio</h1>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-[#24A5EE] font-bold uppercase text-[10px] tracking-[0.2em]">ZABBOT ENGINE • V2.0</p>
+            {lastSaved && <span className="text-[9px] font-black text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase">Saved: {lastSaved}</span>}
+          </div>
+        </div>
+        
+        <div className="flex gap-4 w-full md:w-auto">
+            <Link href="/admin/archive" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-[#162B6E] hover:text-white transition-all">
+                <Library size={16} /> Open Archive
+            </Link>
+            <button onClick={() => setIsPreview(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-slate-100 text-[#162B6E] rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:border-[#24A5EE] transition-all">
+                <Eye size={16} /> Preview Mode
+            </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+        <div className="xl:col-span-2 space-y-10">
+          
+          <section className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3"><ImageIcon className="text-[#24A5EE]" size={20} /> <h3 className="text-xl font-black text-[#162B6E] uppercase italic">1. Visual Identity</h3></div>
+                
+                <CldUploadWidget 
+                  uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                  onSuccess={(result: any) => setIdentity({...identity, imageThumbnail: result?.info?.secure_url})}
+                >
+                  {({ open }) => (
+                    <button onClick={() => open()} className="px-4 py-2 bg-blue-50 text-[#24A5EE] text-[10px] font-black uppercase rounded-xl hover:bg-[#24A5EE] hover:text-white transition-all">
+                        Upload Hero Image
+                    </button>
+                  )}
+                </CldUploadWidget>
+             </div>
+
+             <AdminInput label="Lesson Title" value={identity.title} onChange={(e:any) => setIdentity({...identity, title: e.target.value})} placeholder="e.g. The Morning Greeting" />
+             <AdminTextArea label="Summary / Hook" value={identity.description} onChange={(e:any) => setIdentity({...identity, description: e.target.value})} />
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AdminInput label="Image URL (Auto-filled)" value={identity.imageThumbnail} onChange={(e:any) => setIdentity({...identity, imageThumbnail: e.target.value})} placeholder="https://..." />
+                <div className="grid grid-cols-2 gap-4">
+                    <AdminInput label="Duration (Mins)" type="number" value={identity.timeEstimate} onChange={(e:any) => setIdentity({...identity, timeEstimate: parseInt(e.target.value) || 0})} />
+                    <AdminInput label="XP Reward" value={identity.xpReward} type="number" onChange={(e:any) => setIdentity({...identity, xpReward: parseInt(e.target.value) || 0})} />
+                </div>
+             </div>
+          </section>
+
+          <section className="space-y-6">
+            <div className="flex justify-between items-center px-6">
+                <h3 className="text-xl font-black text-[#162B6E] uppercase italic flex items-center gap-3"><Mic className="text-[#24A5EE]" size={20}/> 2. Lesson Nodes</h3>
+                <span className="text-[10px] font-black text-slate-400 uppercase">{nodes.length} / 5</span>
+            </div>
+
+            {nodes.map((node, i) => (
+                <div key={i} className="bg-white p-8 md:p-10 rounded-[48px] border-slate-100 relative shadow-sm border transition-all hover:border-[#24A5EE]/30">
+                    <button onClick={() => setNodes(nodes.filter((_, idx) => idx !== i))} className="absolute top-8 right-8 text-slate-300 hover:text-red-500"><X size={20}/></button>
+                    <div className="flex flex-col md:flex-row gap-8">
+                        <div className="w-12 h-12 bg-[#162B6E] text-[#24A5EE] rounded-2xl flex items-center justify-center font-black shrink-0">{i + 1}</div>
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <AdminInput label="Yoruba Text" value={node.yoruba} onChange={(e:any) => {
+                                const newNodes = [...nodes]; newNodes[i].yoruba = e.target.value; setNodes(newNodes);
+                            }} />
+                            <AdminInput label="English Translation" value={node.english} onChange={(e:any) => {
+                                const newNodes = [...nodes]; newNodes[i].english = e.target.value; setNodes(newNodes);
+                            }} />
+                            
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[9px] font-black uppercase text-slate-400">Audio Node</label>
+                                <div className="flex gap-2">
+                                    <CldUploadWidget 
+                                      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                                      options={{ resourceType: "video" }}
+                                      onSuccess={(result: any) => {
+                                        const newNodes = [...nodes]; newNodes[i].audio = result?.info?.secure_url; setNodes(newNodes);
+                                      }}
+                                    >
+                                      {({ open }) => (
+                                        <button onClick={() => open()} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl hover:text-[#24A5EE] transition-all"><Mic size={16}/></button>
+                                      )}
+                                    </CldUploadWidget>
+                                    <input className="flex-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-bold" placeholder="Audio URL..." value={node.audio} onChange={(e) => {
+                                        const newNodes = [...nodes]; newNodes[i].audio = e.target.value; setNodes(newNodes);
+                                    }} />
+                                </div>
+                            </div>
+
+                            <AdminInput label="Grammar Note" value={node.grammar} onChange={(e:any) => {
+                                const newNodes = [...nodes]; newNodes[i].grammar = e.target.value; setNodes(newNodes);
+                            }} />
+                        </div>
+                    </div>
+                </div>
+            ))}
+
+            {nodes.length < 5 && (
+                <button onClick={() => setNodes([...nodes, { yoruba: "", english: "", audio: "", grammar: "" }])} className="w-full py-10 border-4 border-dashed border-slate-200 rounded-[48px] text-slate-400 font-black uppercase text-xs tracking-widest hover:border-[#24A5EE] hover:text-[#24A5EE] transition-all">
+                    + Add Step to Lesson
+                </button>
+            )}
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          <div className="bg-[#162B6E] p-10 rounded-[56px] text-white space-y-8 sticky top-8 shadow-2xl border border-white/5">
+             <div className="flex items-center gap-3"><Globe className="text-[#24A5EE]" size={20} /> <h3 className="text-xl font-black uppercase italic">3. Cultural Meta</h3></div>
+             <AdminTextArea dark label="Honorific Rule" value={identity.honorific_rule} onChange={(e:any) => setIdentity({...identity, honorific_rule: e.target.value})} />
+             <AdminInput dark label="Yorùbá Proverb" value={identity.proverb_yoruba} onChange={(e:any) => setIdentity({...identity, proverb_yoruba: e.target.value})} />
+             <AdminInput dark label="Proverb Translation" value={identity.proverb_english} onChange={(e:any) => setIdentity({...identity, proverb_english: e.target.value})} />
+             
+             <button 
+               onClick={handleRelease}
+               disabled={isPending || !identity.title}
+               className="w-full bg-[#24A5EE] py-8 rounded-[32px] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-white hover:text-[#162B6E] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+             >
+               {isPending ? <Loader2 className="animate-spin" /> : <>Release Spark to Students <Zap size={16} fill="currentColor" /></>}
+             </button>
+
+             <button onClick={() => {localStorage.clear(); window.location.reload();}} className="w-full text-[9px] text-white/20 hover:text-red-400 font-black uppercase tracking-widest transition-all">
+               Wipe Local Buffer
+             </button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+function PreviewScreen({ identity, nodes, onEdit, onPublish, isPending }: any) {
+    return (
+        <div className="min-h-screen bg-white p-12">
+            <button onClick={onEdit} className="text-[#24A5EE] font-black uppercase text-xs mb-8 flex items-center gap-2"><ArrowRight className="rotate-180" size={16} /> Back to Editor</button>
+            <div className="max-w-4xl mx-auto space-y-12">
+                <div>
+                    <h1 className="text-6xl font-black text-[#162B6E] tracking-tight mb-4 italic">{identity.title || "Untitled"}</h1>
+                    <p className="text-xl text-slate-500 font-medium">{identity.description}</p>
+                </div>
+                <div className="p-10 bg-slate-50 rounded-[48px] border border-slate-100">
+                    <h3 className="font-black uppercase text-[#162B6E] mb-6">Course Flow</h3>
+                    {nodes.map((n:any, i:number) => (
+                        <div key={i} className="py-4 border-b border-slate-200 last:border-0 flex justify-between">
+                            <span className="font-bold text-[#162B6E]">{n.yoruba}</span>
+                            <span className="text-slate-400 uppercase text-[10px] font-black">{n.english}</span>
+                        </div>
+                    ))}
+                </div>
+                <button onClick={onPublish} disabled={isPending} className="w-full bg-[#16A34A] py-8 rounded-[32px] text-white font-black uppercase tracking-widest flex items-center justify-center gap-4">
+                    {isPending ? <Loader2 className="animate-spin" /> : "Release"}
+                </button>
+            </div>
+        </div>
+    );
+}

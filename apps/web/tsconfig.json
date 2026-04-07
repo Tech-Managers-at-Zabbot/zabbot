@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@root/*": [
+        "*"
+      ]
+    },
+    /* Core Settings */
+    "target": "ES2020",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    /* React / Next */
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    /* Type Safety */
+    "strict": true,
+    "skipLibCheck": true,
+    /* Interop */
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    /* Build Behavior */
+    "noEmit": true,
+    "incremental": true,
+    /* Optional (recommended cleanup) */
+    "allowJs": false
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.mts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
