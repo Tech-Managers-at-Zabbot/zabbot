@@ -1,6 +1,8 @@
-import { openai } from "./openai";
+import { getOpenAI } from "./openai";
 
 export async function generateAIResponse(prompt: string) {
+  const openai = getOpenAI(); // ✅ runtime initialization
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [

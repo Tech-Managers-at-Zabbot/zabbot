@@ -1,28 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import { generateAIResponse } from "@/lib/ai";
+import OpenAI from "openai";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { message } = await req.json();
-
-    const prompt = `
-You are Ọ̀rẹ́, a Yoruba conversation partner.
-
-Speak naturally in Yoruba and English (where needed).
-Encourage the user to respond.
-
-User says:
-"${message}"
-`;
-
-    const reply = await generateAIResponse(prompt);
-
-    return NextResponse.json({ reply });
-  } catch (error) {
-    console.error("Ọ̀rẹ́ AI Error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate response" },
-      { status: 500 }
-    );
+export async function generateAIResponse(prompt: string) {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not set");
   }
+
+  // ✅ Initialize OpenAI only when the function runs (runtime)
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a friendly Yoruba language tutor helping users learn conversational Yoruba in a fun, simple, and culturally rich way.",
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.7,
+  });
+
+  return response.choices[0]?.message?.content || "No response";
 }
