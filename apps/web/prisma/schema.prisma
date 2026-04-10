@@ -7,311 +7,20 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// --- USER MODEL ---
-model User {
-  id                String                   @id @default(uuid())
-  clerkId           String                   @unique
-  name              String?
-  email             String?                  @unique
-  avatarUrl         String?
-  image             String?
-  role              UserRole                 @default(USER)
-  status            String                   @default("ACTIVE")
-  xp                Int                      @default(0)
-  hearts            Int                      @default(5)
-  currentStreak     Int                      @default(0)
-  longestStreak     Int                      @default(0)
-  streakFreezes     Int                      @default(0)
-  isStreakFrozen    Boolean                  @default(false)
-  streakLastUpdated DateTime                 @default(now())
-  bestParaScore     Int                      @default(0)
-  paraRankTitle     String?
-  lastActive        DateTime?                @default(now())
-  themePreference   String                   @default("system")
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
 
-  createdAt         DateTime                 @default(now())
-  updatedAt         DateTime                 @updatedAt
-
-  conversations     AIConversationLog[]
-  activityLogs      ActivityLog[]
-  attempts          Attempt[]
-  initiatedLogs     AuditLog[]               @relation("Initiator")
-  flashcards        Flashcard[]
-  subscription      Subscription?
-  achievements      UserAchievement[]
-  progress          UserLessonProgress[]
-  vocabulary        UserVocabularyProgress[]
-
-  @@index([clerkId])
-}
-
-// ---AI AGENTS ---
-model AIAgent {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  mascot      String
-  route       String   @unique
-  xpReward    Int      @default(50)
-  color       String
-  tag         String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// --- JOURNEYS & SPARKS ---
-model Journey {
-  id             String        @id @default(uuid())
-  title          String
-  description    String?       @db.Text
-  imageThumbnail String?
-  order          Float
-  status         ContentStatus @default(DRAFT)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  sparks         Spark[]
-}
-
-model Spark {
-  id             String        @id @default(uuid())
-  journeyId      String?
-  order          Int           @default(1)
-  title          String
-  slug           String        @unique
-  description    String?       @db.Text
-  difficulty     String        @default("Beginner")
-  xpReward       Int           @default(50)
-  category       SparkCategory @default(JOURNEY)
-  imageThumbnail String?
-  bgColor        String?       @default("#24A5EE")
-  isPublished    Boolean       @default(false)
-  timeEstimate   Int?          @default(5)
-  status         ContentStatus @default(DRAFT)
-
-  // Cultural Meta
-  proverbYoruba  String?
-  proverbEnglish String?
-  honorificRule  String?       @db.Text
-
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  contentBlocks  ContentBlock[]
-  exercises      Exercise[]
-  userProgress   UserLessonProgress[]
-  vocabulary     Vocabulary[]
-
-  journey        Journey?      @relation(fields: [journeyId], references: [id], onDelete: Cascade)
-
-  @@unique([journeyId, order])
-  @@index([journeyId])
-  @@map("sparks_new")
-}
-
-// --- CONTENT BLOCKS & EXERCISES ---
-model ContentBlock {
-  id        String      @id @default(uuid())
-  type      ContentType
-  order     Int         @default(0)
-  yoruba    String?
-  english   String?
-  grammar   String?     @db.Text
-  audioUrl  String?
-  videoUrl  String?
-  fileUrl   String?
-  sparkId   String
-  spark     Spark       @relation(fields: [sparkId], references: [id], onDelete: Cascade)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  @@index([sparkId])
-}
-
-model Exercise {
-  id            String       @id @default(uuid())
-  type          ExerciseType @default(MULTIPLE_CHOICE)
-  question      String
-  options       String[]
-  correctIndex  Int          @default(0)
-  correctAnswer String?
-  explanation   String?      @db.Text
-  sparkId       String
-  spark         Spark        @relation(fields: [sparkId], references: [id], onDelete: Cascade)
-
-  @@index([sparkId])
-}
-
-// --- USER PROGRESS ---
-model UserLessonProgress {
-  id          String    @id @default(uuid())
-  userId      String
-  sparkId     String
-  score       Int       @default(0)
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-  spark       Spark     @relation(fields: [sparkId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, sparkId])
-  @@index([userId])
-  @@index([sparkId])
-}
-
-// --- ACTIVITY & AUDIT LOGS ---
-model ActivityLog {
-  id        String   @id @default(uuid())
-  userId    String
-  xpGained  Int
-  type      String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  event     String
-  status    String
-  timestamp DateTime @default(now())
-  userId    String
-  user      User     @relation("Initiator", fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// --- VOCABULARY & FLASHCARDS ---
-model Vocabulary {
-  id                 String                   @id @default(uuid())
-  yorubaWord         String
-  englishTranslation String
-  exampleSentence    String?
-  audioUrl           String?
-  sparkId            String?
-  lessonId           String?
-  phonemeStamps      PhonemeStamp[]
-  userProgress       UserVocabularyProgress[]
-  spark              Spark?                   @relation(fields: [sparkId], references: [id], onDelete: Cascade)
-
-  @@index([sparkId])
-}
-
-model PhonemeStamp {
-  id         String     @id @default(uuid())
-  vocabId    String
-  syllable   String
-  startTime  Float      @default(0)
-  endTime    Float      @default(0)
-  toneType   String
-  vocabulary Vocabulary @relation(fields: [vocabId], references: [id], onDelete: Cascade)
-}
-
-model UserVocabularyProgress {
-  id           String     @id @default(uuid())
-  userId       String
-  vocabularyId String
-  masteryLevel Int        @default(0)
-  lastReviewed DateTime   @default(now())
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, vocabularyId])
-}
-
-// --- FLASHCARDS ---
-model Flashcard {
-  id           String    @id @default(uuid())
-  userId       String
-  front        String
-  back         String
-  masteryLevel Int       @default(0)
-  nextReview   DateTime  @default(now())
-  lastReviewed DateTime?
-  createdAt    DateTime  @default(now())   
-  sourceLesson String?
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, back], name: "user_flashcard_id")
-}
-
-// --- ACHIEVEMENTS ---
-model Achievement {
-  id               String            @id @default(uuid())
-  title            String
-  description      String
-  iconUrl          String
-  xpValue          Int               @default(100)
-  userAchievements UserAchievement[]
-}
-
-model UserAchievement {
-  id            String      @id @default(uuid())
-  userId        String
-  achievementId String
-  earnedAt      DateTime    @default(now())
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// --- SUBSCRIPTIONS ---
-model Subscription {
-  id                     String          @id @default(uuid())
-  userId                 String          @unique
-  provider               PaymentProvider
-  providerCustomerId     String?
-  providerSubscriptionId String?
-  plan                   String?
-  status                 SubStatus       @default(TRIAL_ACTIVE)
-  currentPeriodStart     DateTime?
-  currentPeriodEnd       DateTime?
-  trialStart             DateTime?
-  trialEnd               DateTime?
-  cancelAtPeriodEnd      Boolean         @default(false)
-  cancelledAt            DateTime?
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
-  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([providerCustomerId])
-  @@index([providerSubscriptionId])
-}
-
-// --- AI CONVERSATION & DAILY WORDS ---
-model AIConversationLog {
-  id        String   @id @default(uuid())
-  userId    String
-  prompt    String
-  response  String
-  context   String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model TodaysWord {
-  id          String   @id @default(uuid())
-  word        String   @unique
-  phonetic    String
-  meaning     String
-  displayDate DateTime @unique
-  createdAt   DateTime @default(now())
-}
-
-// --- ATTEMPTS ---
-model Attempt {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  score     Int      @default(0)
-  content   String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// --- ENUMS ---
 enum UserRole {
   USER
   CURATOR
   SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
 }
 
 enum PaymentProvider {
@@ -320,14 +29,12 @@ enum PaymentProvider {
   PAYPAL
 }
 
-enum SparkCategory {
-  SPARK
-  JOURNEY
-}
-
 enum ContentType {
   LESSON_NODE
   MEDIA
+  TEXT
+  AUDIO
+  VIDEO
 }
 
 enum ContentStatus {
@@ -335,6 +42,14 @@ enum ContentStatus {
   ACTIVE
   LOCKED
   ARCHIVED
+}
+
+enum SparkCategory {
+  CULTURE
+  LANGUAGE
+  STORYTELLING
+  GRAMMAR
+  PRACTICE
 }
 
 enum ExerciseType {
@@ -351,4 +66,426 @@ enum SubStatus {
   ACTIVE
   PAST_DUE
   CANCELLED
+}
+
+enum ChatRole {
+  USER
+  AI
+  SYSTEM
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+//////////////////////////////////////////////////////
+// USER (Updated for NextAuth / Removed Clerk)
+//////////////////////////////////////////////////////
+
+model User {
+  id              String      @id @default(uuid())
+  name            String?
+  email           String?     @unique
+  emailVerified   DateTime?   // Required for NextAuth
+  image           String?     // Standard NextAuth image field
+  avatarUrl       String?     // Keeping your custom field for fallback
+
+  role            UserRole    @default(USER)
+  status          UserStatus  @default(ACTIVE)
+
+  xp              Int         @default(0)
+  hearts          Int         @default(5)
+
+  currentStreak   Int         @default(0)
+  longestStreak   Int         @default(0)
+  streakFreezes   Int         @default(0)
+  isStreakFrozen  Boolean     @default(false)
+  lastStreakDate  DateTime?
+
+  bestParaScore   Int         @default(0)
+  paraRankTitle   String?
+
+  lastActive      DateTime?
+  themePreference String      @default("light")
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  // Relations
+  conversations   AIConversationLog[]
+  sessions        AIConversationSession[]
+  activityLogs    ActivityLog[]
+  attempts        Attempt[]
+  initiatedLogs   AuditLog[] @relation("Initiator")
+  flashcards      Flashcard[]
+  subscription    Subscription?
+  achievements    UserAchievement[]
+  progress        UserLessonProgress[]
+  vocabulary      UserVocabularyProgress[]
+  
+  // NextAuth Account Relation (Recommended for later)
+  accounts        Account[]
+}
+
+// Added for NextAuth full integration support
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+//////////////////////////////////////////////////////
+// JOURNEY & SPARK
+//////////////////////////////////////////////////////
+
+model Journey {
+  id              String        @id @default(uuid())
+  title           String
+  description     String?       @db.Text
+  imageThumbnail  String?
+  icon            String?
+  color           String?       @default("#162B6E")
+  order           Int
+  status          ContentStatus @default(DRAFT)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  sparks          Spark[]
+}
+
+model Spark {
+  id              String        @id @default(uuid())
+  journeyId       String?
+  order           Int           @default(1)
+
+  title           String
+  slug            String        @unique
+  description     String?       @db.Text
+  category        SparkCategory @default(LANGUAGE) // ✅ Now queryable!
+
+  difficulty      Difficulty    @default(BEGINNER)
+  xpReward        Int           @default(50)
+
+  imageThumbnail  String?
+  bgColor         String?       @default("#24A5EE")
+  isPublished     Boolean       @default(false)
+  timeEstimate    Int?          @default(5)
+  status          ContentStatus @default(DRAFT)
+
+  proverbYoruba   String?
+  proverbEnglish  String?
+  honorificRule   String? @db.Text
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  contentBlocks   ContentBlock[]
+  exercises       Exercise[]
+  userProgress    UserLessonProgress[]
+  vocabulary      Vocabulary[]
+
+  journey         Journey? @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@index([journeyId, order])
+  @@index([status])
+  @@index([category])
+  @@index([difficulty])
+  @@map("sparks_new")
+}
+
+//////////////////////////////////////////////////////
+// CONTENT
+//////////////////////////////////////////////////////
+
+model ContentBlock {
+  id          String      @id @default(uuid())
+  type        ContentType
+  order       Int         @default(0)
+
+  yoruba      String?
+  translation String?
+  grammar     String?     @db.Text
+
+  audioUrl    String?
+  videoUrl    String?
+  fileUrl     String?
+
+  sparkId     String
+  spark       Spark       @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sparkId])
+}
+
+model Exercise {
+  id            String       @id @default(uuid())
+  type          ExerciseType @default(MULTIPLE_CHOICE)
+
+  question      String
+  options       String[]
+  optionsMeta   Json?        // ✅ NEW (non-breaking upgrade)
+  correctIndex  Int          @default(0)
+  correctAnswer String?
+  explanation   String?      @db.Text
+
+  sparkId       String
+  spark         Spark        @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  @@index([sparkId])
+}
+
+//////////////////////////////////////////////////////
+// PROGRESS
+//////////////////////////////////////////////////////
+
+model UserLessonProgress {
+  id          String    @id @default(uuid())
+  userId      String
+  sparkId     String
+
+  score       Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  spark       Spark     @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sparkId])
+  @@index([userId])
+  @@index([sparkId])
+}
+
+//////////////////////////////////////////////////////
+// VOCABULARY
+//////////////////////////////////////////////////////
+
+model Vocabulary {
+  id                 String   @id @default(uuid())
+  yorubaWord         String   @unique
+  englishTranslation String   @default("")
+  exampleSentence    String?
+
+  tones              String?
+
+  maleAudioUrl       String?
+  femaleAudioUrl     String?
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt   // ✅ FIXED
+  deletedAt          DateTime?
+
+  sparkId            String?
+  phonemeStamps      PhonemeStamp[]
+  userProgress       UserVocabularyProgress[]
+
+  spark              Spark? @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  @@index([sparkId])
+  @@index([createdAt])
+  @@index([yorubaWord])
+  @@index([englishTranslation])
+}
+
+model PhonemeStamp {
+  id         String     @id @default(uuid())
+  vocabId    String
+  syllable   String
+  startTime  Float      @default(0)
+  endTime    Float      @default(0)
+  toneType   String
+
+  vocabulary Vocabulary @relation(fields: [vocabId], references: [id], onDelete: Cascade)
+}
+
+model UserVocabularyProgress {
+  id           String     @id @default(uuid())
+  userId       String
+  vocabularyId String
+
+  masteryLevel Int        @default(0)
+  lastReviewed DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vocabularyId])
+}
+
+//////////////////////////////////////////////////////
+// AI CHAT
+//////////////////////////////////////////////////////
+
+model AIConversationSession {
+  id        String   @id @default(uuid())
+  userId    String
+
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs      AIConversationLog[]
+
+  @@index([userId])
+}
+
+model AIConversationLog {
+  id        String   @id @default(uuid())
+  userId    String
+  sessionId String
+
+  role      ChatRole
+  content   String   @db.Text
+
+  metadata   Json?
+  tokensUsed Int?
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   AIConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([sessionId, createdAt])
+}
+
+//////////////////////////////////////////////////////
+// OTHER
+//////////////////////////////////////////////////////
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  xpGained  Int
+  type      String
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Attempt {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  score     Int      @default(0)
+  content   String?
+
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Flashcard {
+  id           String    @id @default(uuid())
+  userId       String
+  front        String
+  back         String
+
+  masteryLevel Int       @default(0)
+  nextReview   DateTime  @default(now())
+  lastReviewed DateTime?
+
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, back])
+}
+
+model Achievement {
+  id          String            @id @default(uuid())
+  title       String
+  description String
+  iconUrl     String
+  xpValue     Int               @default(100)
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  achievementId String
+
+  earnedAt      DateTime    @default(now())
+
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                     String          @id @default(uuid())
+  userId                 String          @unique
+
+  provider               PaymentProvider
+  providerCustomerId     String?
+  providerSubscriptionId String?
+
+  plan                   String?
+  status                 SubStatus       @default(TRIAL_ACTIVE)
+
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  trialStart             DateTime?
+  trialEnd               DateTime?
+
+  cancelAtPeriodEnd      Boolean         @default(false)
+  cancelledAt            DateTime?
+
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([providerCustomerId])
+  @@index([providerSubscriptionId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  event     String
+  status    String
+  timestamp DateTime @default(now())
+
+  userId    String
+  user      User     @relation("Initiator", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TodaysWord {
+  id          String   @id @default(uuid())
+  word        String   @unique
+  phonetic    String
+  meaning     String
+  displayDate DateTime @unique
+  createdAt   DateTime @default(now())
 }

@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import LandingHeader from "@/components/layout/LandingHeader";
-import MobileNav from "@/components/layout/MobileNav";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesGrid from "@/components/landing/FeaturesGrid";
 import PartnerTicker from "@/components/landing/PartnerTicker";
@@ -11,60 +9,65 @@ import DashboardPeek from "@/components/landing/DashboardPeek";
 import TeamSection from "@/components/landing/TeamSection";
 import PricingBento from "@/components/landing/PricingBento";
 import FooterCTA from "@/components/landing/FooterCTA";
+import MobileNav from "@/components/layout/MobileNav";
 
 export default function LandingPage() {
   return (
-    <main className="relative min-h-screen bg-[#EFF6FF] selection:bg-[#24A5EE]/30">
-      {/* 1. NAVIGATION LAYER */}
-      <LandingHeader />
-      <MobileNav />
-
-      {/* 2. GLOBAL FLUID BACKGROUND */}
-      <div className="fluid-bg-container fixed inset-0 pointer-events-none">
-        <div 
-          className="fluid-blob w-[500px] h-[500px] bg-[#24A5EE]/15 top-[-10%] left-[-10%]" 
-          style={{ animationDelay: '0s' }}
-        />
-        <div 
-          className="fluid-blob w-[600px] h-[600px] bg-[#162B6E]/5 top-[40%] left-[20%]" 
-          style={{ animationDelay: '-10s' }}
-        />
+    <main className="relative selection:bg-zabbot-primary/30 overflow-x-hidden">
+      
+      {/* 🌌 GLOBAL BACKGROUND (kept) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="zabbot-blob zabbot-blob-blue" />
+        <div className="zabbot-blob zabbot-blob-purple opacity-20" />
       </div>
 
-      {/* 3. CONTENT STACK */}
-      <div className="relative z-10">
-        
-        {/* THE HOOK: Hero Section */}
-        <HeroSection />
+      {/* 📱 APP-LIKE STACK (NO MORE WEBSITE SPACING) */}
+      <div className="relative z-10 flex flex-col gap-16 pb-32">
 
-        {/* THE VALUE: Core features grid */}
-        <div id="features" className="relative z-20">
+        {/* 1. HERO (HOOK) */}
+        <section className="px-4 pt-6">
+          <HeroSection />
+        </section>
+
+        {/* 2. COMPARISON (IMMEDIATE DIFFERENTIATION) ✅ */}
+        <section className="px-4">
+          <ComparisonSection />
+        </section>
+
+        {/* 3. PRODUCT IMMERSION */}
+        <section className="px-4">
+          <DashboardPeek />
+        </section>
+
+        {/* 4. FEATURES (NOW CONTEXTUAL) */}
+        <section id="features" className="px-4">
           <FeaturesGrid />
-        </div>
+        </section>
 
-        {/* 🚀 THE AUTHORITY: Partner Ticker 
-            Placement here acts as a "Trust Bridge" between 
-            explaining the features and comparing with competitors.
-        */}
-        <PartnerTicker />
+        {/* 5. SOCIAL PROOF */}
+        <section className="px-4">
+          <PartnerTicker />
+        </section>
 
-        {/* THE CONTEXT: Why Zabbot is the better choice */}
-        <ComparisonSection />
-
-        {/* THE PROOF: A peek into the actual app dashboard */}
-        <DashboardPeek />
-
-        {/* THE PEOPLE: Meet the Custodians */}
-        <TeamSection />
-
-        {/* THE TRANSACTION: Pricing and Plans */}
-        <div id="pricing" className="relative z-20">
+        {/* 6. PRICING (DECISION MOMENT) */}
+        <section id="pricing" className="px-4">
           <PricingBento />
-        </div>
+        </section>
 
-        {/* THE FINAL PUSH: Footer CTA */}
-        <FooterCTA />
-        
+        {/* 7. TRUST (LATE-STAGE ONLY) */}
+        <section className="px-4">
+          <TeamSection />
+        </section>
+
+        {/* 8. FINAL CTA */}
+        <section className="px-4 pb-10">
+          <FooterCTA />
+        </section>
+      </div>
+
+      {/* 📱 MOBILE NAV (FLOATING APP CONTROL) */}
+      <div className="block md:hidden">
+        <MobileNav />
       </div>
     </main>
   );

@@ -202,7 +202,7 @@ export default function HeroSection() {
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="relative aspect-[4/5] w-full"
             >
-              <Image src="mascot.svg" alt="Zabbot" fill className="object-contain" priority />
+              <Image src="/mascots/parrot_map.png" alt="Zabbot" fill className="object-contain" priority />
               
               <motion.div 
                 initial={{ opacity: 0 }} 

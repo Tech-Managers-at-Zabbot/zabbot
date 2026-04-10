@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Lexend, Lexend_Exa } from "next/font/google";
+import { Inter, Lexend, Lexend_Exa } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
-import { ClerkProvider } from "@clerk/nextjs";
+import GlobalHeader from "@/components/layout/GlobalHeader";
 
-// 1. FONTS: Using display: "swap" and variable names for CSS access
+// 1. FONTS
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
 const lexend = Lexend({
   subsets: ["latin"],
-  variable: "--font-lexend",
+  variable: "--font-heading",
   display: "swap",
 });
 
 const lexendExa = Lexend_Exa({
   subsets: ["latin"],
-  variable: "--font-lexend-exa",
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -32,45 +38,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        layout: {
-          unsafe_disableDevelopmentModeWarnings: true,
-          socialButtonsVariant: "blockButton",
-          logoPlacement: "inside",
-        },
-        variables: {
-          colorPrimary: "#162B6E",
-          colorText: "#162B6E",
-          // Matches our font-sans tailwind config
-          fontFamily: "var(--font-lexend)",
-          borderRadius: "1rem",
-        },
-      }}
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${lexend.variable} ${lexendExa.variable}`}
     >
-      {/* VETTING NOTE: Injecting font variables at the <html> level ensures 
-          modals and portals (like Clerk's) inherit the luxury typography.
-      */}
-      <html
-        lang="en"
-        suppressHydrationWarning
-        className={`${lexend.variable} ${lexendExa.variable}`}
-      >
-        <body
-          className="font-sans antialiased bg-[#EFF6FF] text-[#162B6E] min-h-screen"
+      <body className="antialiased selection:bg-primary/20">
+        {/* BYPASSING SYSTEM DARK MODE:
+            Setting defaultTheme="light" and enableSystem={false} 
+            ensures your brand's light-blue aesthetic loads first.
+        */}
+        <Providers 
+          attribute="class" 
+          defaultTheme="light" 
+          enableSystem={false}
         >
-          <Providers>
+          <GlobalHeader />
+          
+          <main className="relative pt-24 min-h-screen">
             {children}
-          </Providers>
-
-          <Toaster
-            position="top-center"
-            richColors
-            closeButton
-            theme="light"
-          />
-        </body>
-      </html>
-    </ClerkProvider>
+          </main>
+          
+          <Toaster position="top-center" richColors closeButton />
+        </Providers>
+      </body>
+    </html>
   );
 }

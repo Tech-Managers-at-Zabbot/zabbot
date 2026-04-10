@@ -1,16 +1,19 @@
 "use client";
 
-import { ThemeProvider } from "next-themes";
+import * as React from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { type ThemeProviderProps } from "next-themes";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, ...props }: ThemeProviderProps) {
   return (
-    <ThemeProvider
+    <NextThemesProvider
       attribute="class"
-      defaultTheme="light" // Zabbot looks better in light mode for now based on your bg-[#EFF6FF]
-      enableSystem
-      disableTransitionOnChange
+      defaultTheme="light"      // Zabbot default
+      enableSystem={false}      // Force light mode preference
+      disableTransitionOnChange={false} // Smooth transitions enabled
+      {...props}                // Allows layout.tsx to override or pass additional props
     >
       {children}
-    </ThemeProvider>
+    </NextThemesProvider>
   );
 }

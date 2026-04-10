@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React from "react";
 import { cn } from "@/lib/utils";
@@ -6,12 +6,15 @@ import {
   LayoutDashboard,
   Map,
   Layers,
+  BookOpen,
   Trophy,
+  Store,
   Settings,
   ChevronLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -22,65 +25,83 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
 
   const menuItems = [
-    { name: "Home", icon: LayoutDashboard, href: "/dashboard" },
-    { name: "Journeys", icon: Map, href: "/dashboard/journeys" },
-    { name: "Flashcards", icon: Layers, href: "/dashboard/flashcards" },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { name: "Ọ̀rẹ́", icon: Map, href: "/ai/ore" },
+    { name: "Pàrà", icon: Layers, href: "/ai/para" },
+    { name: "Òwe", icon: BookOpen, href: "/ai/owe" },
+    { name: "Marketplace", icon: Store, href: "/dashboard/marketplace" },
     { name: "Leaderboard", icon: Trophy, href: "/dashboard/leaderboard" },
   ];
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 h-screen transition-all duration-500 z-50 flex flex-col shadow-2xl",
-        isCollapsed ? "w-20" : "w-64"
+        "fixed left-6 top-24 bottom-6 transition-all duration-500 z-50 flex flex-col",
+        isCollapsed ? "w-20" : "w-[260px]"
       )}
     >
-      {/* High-End Glassmorphism Background */}
-      <div className="absolute inset-0 bg-[#162B6E]/90 backdrop-blur-xl border-r border-white/10" />
+      {/* FLOATING GLASS PANEL */}
+      <div className="absolute inset-0 rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl" />
 
-      <div className="relative z-10 flex flex-col h-full py-6 px-4">
-        {/* Logo Section */}
-        <div className={cn("flex items-center mb-12", isCollapsed ? "justify-center" : "justify-between")}>
-          {!isCollapsed && (
-            <span className="text-xl font-black text-white tracking-tighter">ZABBOT</span>
-          )}
+      <div className="relative z-10 flex flex-col h-full py-6 px-3">
+        
+        {/* COLLAPSE BUTTON */}
+        <div className="flex items-center mb-10 justify-center">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#162B6E] transition-colors"
             aria-label="Toggle Sidebar"
           >
-            <ChevronLeft className={cn("transition-transform duration-300", isCollapsed && "rotate-180")} size={18} />
+            <ChevronLeft
+              className={cn(
+                "transition-transform duration-300",
+                isCollapsed && "rotate-180"
+              )}
+              size={18}
+            />
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* NAVIGATION */}
         <nav className="flex-1 space-y-2">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
+
             return (
-              <Link key={item.name} href={item.href} className="block">
-                <div
+              <Link key={item.name} href={item.href}>
+                <motion.div
+                  whileTap={{ scale: 0.96, y: 1 }}
+                  whileHover={{ scale: 1.02 }}
                   className={cn(
-                    "flex items-center gap-4 p-3.5 rounded-2xl transition-all group",
+                    "flex items-center gap-4 p-3.5 rounded-2xl transition-all cursor-pointer",
                     isActive
-                      ? "bg-white text-[#162B6E] shadow-lg shadow-black/20"
-                      : "text-white/60 hover:text-white hover:bg-white/10"
+                      ? "bg-gradient-to-r from-[#162B6E] to-[#24A5EE] text-white shadow-md"
+                      : "text-slate-600 hover:text-[#162B6E] hover:bg-blue-50"
                   )}
                 >
-                  <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                  {!isCollapsed && <span className="font-semibold tracking-tight">{item.name}</span>}
-                </div>
+                  <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  {!isCollapsed && (
+                    <span className="font-semibold tracking-tight">
+                      {item.name}
+                    </span>
+                  )}
+                </motion.div>
               </Link>
             );
           })}
         </nav>
 
-        {/* Actionable Footer */}
-        <Link href="/dashboard/settings" className="group">
-          <div className="pt-4 border-t border-white/10 flex items-center gap-4 text-white/50 group-hover:text-white transition-colors">
+        {/* FOOTER */}
+        <Link href="/dashboard/settings" className="group mt-auto">
+          <motion.div
+            whileTap={{ scale: 0.96 }}
+            className="pt-4 border-t border-slate-200 flex items-center gap-4 text-slate-500 hover:text-[#162B6E] transition-colors"
+          >
             <Settings size={20} />
-            {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
-          </div>
+            {!isCollapsed && (
+              <span className="text-sm font-medium">Settings</span>
+            )}
+          </motion.div>
         </Link>
       </div>
     </aside>

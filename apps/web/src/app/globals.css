@@ -1,35 +1,48 @@
 @import "tailwindcss";
 
 /* =========================
-   🎨 DESIGN TOKENS
+    🎨 THEME CONFIG (Tailwind v4)
 ========================= */
 @theme {
-  /* Typography */
-  --font-heading: "Lexend", sans-serif;
-  --font-ui: "Lexend", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-body: var(--font-body), ui-sans-serif, system-ui;
+  --font-heading: var(--font-heading), ui-sans-serif, system-ui;
+  --font-display: var(--font-display), sans-serif;
 
-  /* Brand Colors */
+  /* Brand Palette */
   --color-heritage: #162B6E;
-  --color-learning: #24A5EE;
-  --color-soft-bg: #F8FAFC;
+  --color-primary: #24A5EE;
+  --color-soft: #EFF6FF;
   --color-xp: #FACC15;
   --color-success: #16A34A;
   --color-error: #EF4444;
 
-  /* Glass System */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.5);
+  /* Text Colors */
+  --color-text: #0F172A;
+  --color-text-muted: #64748B;
 
-  /* Radius & Shadows */
-  --radius-zabbot: 28px;
-  --shadow-premium: 0 10px 40px rgba(0,0,0,0.06);
-  --shadow-strong: 0 20px 60px rgba(0,0,0,0.08);
-  --shadow-ai-glow: 0 0 25px rgba(36,165,238,0.2);
+  /* Effects */
+  --radius-zabbot: 32px;
+  --radius-button: 16px;
+
+  --shadow-premium: 0 8px 32px rgba(22, 43, 110, 0.05);
+  --shadow-strong: 0 20px 60px rgba(22, 43, 110, 0.08);
+
+  /* Animations */
+  @keyframes blink {
+    0%, 100% { opacity: 1 }
+    50% { opacity: 0 }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  --animate-blink: blink 1.2s infinite;
+  --animate-float: float 6s ease-in-out infinite;
 }
 
 /* =========================
-   🌍 BASE LAYER
+    🌍 BASE (Light Mode Focus)
 ========================= */
 @layer base {
   html {
@@ -37,148 +50,82 @@
   }
 
   body {
-    @apply text-[#0F172A] font-body antialiased;
-    overflow-x: hidden;
-    min-height: 100vh;
+    @apply antialiased min-h-screen transition-colors duration-500;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    
+    /* THE APPLE GRADIENT: Clean, Airy, Premium */
+    background: linear-gradient(
+      135deg,
+      #F8FAFC 0%, 
+      #EFF6FF 50%, 
+      #FFFFFF 100%
+    ) fixed !important;
+  }
+
+  /* DARK MODE OVERRIDE: Using deep navy instead of flat black */
+  html.dark body {
+    background: linear-gradient(135deg, #0F1117 0%, #07090D 100%) fixed !important;
+    color: #F8FAFC !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight transition-colors duration-500;
+    color: var(--color-heritage);
+  }
+
+  /* Headings must stay readable in Dark Mode */
+  html.dark :is(h1, h2, h3, h4, h5, h6) {
+    color: #FFFFFF;
+  }
+
+  p, span, li {
+    @apply transition-colors duration-500;
+  }
+}
+
+/* =========================
+    🧊 COMPONENTS (The Glow & Gloss)
+========================= */
+@layer components {
+
+  /* GLASS CARD: Increased opacity for better text legibility */
+  .zabbot-glass-card {
+    @apply backdrop-blur-2xl transition-all duration-500;
+    border-radius: var(--radius-zabbot);
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-premium);
+  }
+
+  html.dark .zabbot-glass-card {
+    background: rgba(15, 17, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* PRIMARY BUTTON */
+  .button-primary {
+    @apply inline-flex items-center justify-center transition-all duration-300 active:scale-95;
+    padding: 14px 28px;
+    border-radius: var(--radius-button);
+    font-weight: 700;
+    background: var(--color-primary);
+    color: white;
+    box-shadow: 0 10px 20px -5px rgba(36, 165, 238, 0.3);
+  }
+
+  .button-primary:hover {
+    @apply shadow-xl brightness-110 -translate-y-0.5;
+  }
+
+  /* CUSTOM SCROLLBAR */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-
-  h1, h2, h3, h4 {
-    @apply font-heading tracking-tight;
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
   }
-}
-
-/* =========================
-   🌈 BACKGROUND SYSTEM (CRITICAL)
-========================= */
-.zabbot-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  background: linear-gradient(
-    135deg,
-    #f8fafc 0%,
-    #eef2ff 40%,
-    #e0f2fe 100%
-  );
-}
-
-/* Dark Mode Background */
-.dark .zabbot-bg {
-  background: linear-gradient(
-    135deg,
-    #020617 0%,
-    #0f172a 40%,
-    #020617 100%
-  );
-}
-
-/* Floating Glow Blobs */
-.zabbot-blob {
-  position: absolute;
-  width: 400px;
-  height: 400px;
-  filter: blur(120px);
-  opacity: 0.35;
-  border-radius: 50%;
-  animation: float 20s infinite alternate ease-in-out;
-}
-
-.zabbot-blob-blue {
-  background: #60a5fa;
-  top: -120px;
-  left: -120px;
-}
-
-.zabbot-blob-purple {
-  background: #a78bfa;
-  bottom: -120px;
-  right: -80px;
-}
-
-/* =========================
-   🧊 GLASS SYSTEM (UPGRADED)
-========================= */
-
-/* Base Glass */
-.zabbot-glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border-radius: var(--radius-zabbot);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-premium);
-  transition: all 0.4s ease;
-}
-
-/* Strong Glass (Primary Focus Cards) */
-.zabbot-glass-strong {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px);
-  border-radius: 32px;
-  border: 1px solid rgba(255,255,255,0.7);
-  box-shadow: var(--shadow-strong);
-}
-
-/* Dark Mode Glass */
-.dark .zabbot-glass-card {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.dark .zabbot-glass-strong {
-  background: rgba(255,255,255,0.08);
-}
-
-/* Glass Highlight Edge (Luxury feel) */
-.glass-shiny-edge {
-  position: relative;
-}
-.glass-shiny-edge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border-top: 1px solid rgba(255,255,255,0.6);
-  border-left: 1px solid rgba(255,255,255,0.6);
-  pointer-events: none;
-}
-
-/* =========================
-   🎬 ANIMATIONS
-========================= */
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(60px, 100px) scale(1.2); }
-  100% { transform: translate(-40px, 40px) scale(0.9); }
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-shimmer {
-  animation: shimmer 2.5s infinite linear;
-}
-
-/* XP Glow Effect */
-.xp-glow {
-  box-shadow: 0 0 20px rgba(250,204,21,0.5);
-}
-
-/* AI Glow Effect */
-.ai-glow {
-  box-shadow: var(--shadow-ai-glow);
-}
-
-/* =========================
-   🧭 SCROLLBAR (PREMIUM)
-========================= */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(22, 43, 110, 0.2);
-  border-radius: 999px;
 }

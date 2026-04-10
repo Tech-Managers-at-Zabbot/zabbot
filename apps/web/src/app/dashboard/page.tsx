@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { ContentStatus, SparkCategory, Spark as PrismaSpark } from "@prisma/client";
+import { ContentStatus } from "@prisma/client";
 import ContinueLearningCard from "@/components/dashboard/ContinueLearningCard";
 import SparksCarousel from "@/components/dashboard/SparksCarousel";
 import JourneyPath from "@/components/dashboard/JourneyPath";
@@ -8,11 +8,10 @@ import RightPanel from "@/components/dashboard/RightPanel";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import Milestones from "@/components/dashboard/Milestones";
-import { Spark, SparkUIStatus } from "@/types/spark";
+import { Spark } from "@/types/spark";
 
 export const dynamic = "force-dynamic";
 
-// Constants for maintainability
 const FALLBACKS = {
   IMAGE: "/assets/placeholders/zabbot-spark.jpg",
   XP: 50,
@@ -23,13 +22,21 @@ async function getDashboardData(userId: string) {
   try {
     const [sparksRaw, journeyRaw, progressRaw, todaysWord] = await Promise.all([
       db.spark.findMany({
-        where: { status: ContentStatus.ACTIVE, category: SparkCategory.SPARK },
+        where: { 
+          status: "ACTIVE" as ContentStatus, 
+          
+        },
         orderBy: { createdAt: "asc" },
         take: 12,
       }),
       db.journey.findFirst({
-        where: { status: ContentStatus.ACTIVE },
-        include: { sparks: { where: { status: ContentStatus.ACTIVE }, orderBy: { order: "asc" } } },
+        where: { status: "ACTIVE" as ContentStatus },
+        include: { 
+          sparks: { 
+            where: { status: "ACTIVE" as ContentStatus }, 
+            orderBy: { order: "asc" } 
+          } 
+        },
       }),
       db.userLessonProgress.findMany({ where: { userId } }),
       db.todaysWord.findFirst({ orderBy: { displayDate: "desc" } }),
@@ -54,7 +61,11 @@ async function getDashboardData(userId: string) {
 
     const sparks = sparksRaw.map(formatSpark);
     const journeySparks = journeyRaw?.sparks.map(formatSpark) || [];
-    const continueSpark = journeySparks.find(s => s.uiStatus === "active") || journeySparks.find(s => s.uiStatus === "locked") || sparks[0];
+    
+    const continueSpark = 
+      journeySparks.find(s => s.uiStatus === "active") || 
+      journeySparks.find(s => s.uiStatus === "locked") || 
+      sparks[0];
 
     return { sparks, journeySparks, continueSpark, todaysWord };
   } catch (error) {
@@ -64,7 +75,12 @@ async function getDashboardData(userId: string) {
 }
 
 export default async function DashboardPage() {
-  const userId = "dev-user"; // Replace with actual auth logic (e.g., Clerk auth())
+  /**
+   * 🛡️ AUTH TRANSITION
+   * Updated to use a consistent dev ID that matches your local DB record.
+   */
+  const userId = "user_debug_123"; 
+  
   const { sparks, journeySparks, continueSpark, todaysWord } = await getDashboardData(userId);
 
   return (
@@ -75,7 +91,6 @@ export default async function DashboardPage() {
         {continueSpark && <ContinueLearningCard spark={continueSpark} />}
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-          {/* LEFT COLUMN: PRIMARY LEARNING */}
           <div className="xl:col-span-8 space-y-12">
             <section>
               <h2 className="text-xl font-black text-[#162B6E] mb-6 flex items-center gap-2">
@@ -92,7 +107,6 @@ export default async function DashboardPage() {
             <AIHub />
           </div>
 
-          {/* RIGHT COLUMN: UTILITY & SOCIAL */}
           <div className="xl:col-span-4 space-y-8">
             <RightPanel word={todaysWord ?? undefined} />
             <Leaderboard leaderboard={[

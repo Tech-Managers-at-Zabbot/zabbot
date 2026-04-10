@@ -1,30 +1,30 @@
-import OpenAI from "openai";
+import { NextResponse } from "next/server";
+import { streamOreResponse } from "@/lib/ai/ore";
 
-export async function generateAIResponse(prompt: string) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not set");
+export async function POST(req: Request) {
+  try {
+    const { prompt } = await req.json();
+
+    if (!prompt) return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+
+    const stream = await streamOreResponse(prompt);
+    const encoder = new TextEncoder();
+
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of stream) {
+          const text = chunk.choices[0]?.delta?.content || "";
+          controller.enqueue(encoder.encode(text));
+        }
+        controller.close();
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  } catch (error) {
+    console.error("STREAM ERROR:", error);
+    return NextResponse.json({ error: "Streaming failed" }, { status: 500 });
   }
-
-  // ✅ Initialize OpenAI only when the function runs (runtime)
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a friendly Yoruba language tutor helping users learn conversational Yoruba in a fun, simple, and culturally rich way.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-    temperature: 0.7,
-  });
-
-  return response.choices[0]?.message?.content || "No response";
 }
