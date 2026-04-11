@@ -1,113 +1,196 @@
 "use client";
 
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import ParaPlayer from "./ParaPlayer";
 import ParaRecorder from "./ParaRecorder";
 import ParaWaveform from "./ParaWaveform";
-import ParaResult from "./ParaResult";
+import ParaResultOverlay from "./ParaResult";
 import VoiceSelector from "./VoiceSelector";
 import WordCard from "./WordCard";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
-import { RotateCcw, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Lock, ArrowLeft } from "lucide-react";
 
-export default function ParaWaveCompare({
-  english,
-  yoruba,
-  tones,
-  referenceAudioUrl,
-  selectedVoice,
-  onVoiceChange,
-  isRecording,
-  onStartRecording,
-  onStopRecording,
-  onRecordingComplete,
-  userAudio,
-  hasRecorded,
-  result,
-  onNext,
-}: any) {
-  
-  const userAudioUrl = useMemo(
-    () => (userAudio ? URL.createObjectURL(userAudio) : undefined),
-    [userAudio]
-  );
+interface Result {
+  total: number;
+  tone: number;
+  pronunciation: number;
+  feedback: string;
+}
 
+interface Props {
+  english: string;
+  yoruba: string;
+  tones: string[];
+  referenceAudioUrl: string;
+  selectedVoice: "male" | "female";
+  onVoiceChange: (v: "male" | "female") => void;
+  isRecording: boolean;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  onRecordingComplete: (blob: Blob) => void;
+  userAudio?: Blob;
+  hasRecorded: boolean;
+  result: Result;
+  onNext: () => void;
+  onPrevious: () => void;
+  onResetResult: () => void;
+  canGoBack: boolean;
+  isLocked: boolean;
+  previousScore: number;
+}
+
+export default function ParaWaveCompare(props: Props) {
+  const {
+    english,
+    yoruba,
+    tones,
+    referenceAudioUrl,
+    selectedVoice,
+    onVoiceChange,
+    isRecording,
+    onStartRecording,
+    onStopRecording,
+    onRecordingComplete,
+    userAudio,
+    hasRecorded,
+    result,
+    onNext,
+    onPrevious,
+    onResetResult,
+    canGoBack,
+    isLocked,
+    previousScore,
+  } = props;
+
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+  // Memoize the URL and handle cleanup correctly
+  const userAudioUrl = useMemo(() => {
+    if (!userAudio) return undefined;
+    return URL.createObjectURL(userAudio);
+  }, [userAudio]);
+
+  // Clean up Object URLs to prevent memory leaks in the browser
   useEffect(() => {
-    return () => { if (userAudioUrl) URL.revokeObjectURL(userAudioUrl); };
+    return () => {
+      if (userAudioUrl) URL.revokeObjectURL(userAudioUrl);
+    };
   }, [userAudioUrl]);
+
+  // Trigger overlay when a valid score is received
+  useEffect(() => {
+    if (result && result.total > 0) {
+      setIsOverlayOpen(true);
+    }
+  }, [result]);
+
+  const handleRetry = () => {
+    setIsOverlayOpen(false);
+    onResetResult();
+  };
+
+  const handleNext = () => {
+    setIsOverlayOpen(false);
+    // Slight delay to allow overlay animation to finish
+    setTimeout(onNext, 250);
+  };
+
+  // Helper to safely handle voice changes from generic string inputs
+  const handleVoiceChange = (voice: string) => {
+    if (voice === "male" || voice === "female") {
+      onVoiceChange(voice);
+    }
+  };
 
   return (
     <div className="relative w-full flex flex-col items-center gap-6">
-      
-      {/* 1. MAIN CONTENT STAGE */}
-      <div className={cn(
-        "w-full max-w-5xl mx-auto p-6 md:p-10 transition-all duration-700",
-        "bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 shadow-premium",
-        isRecording && "scale-[0.99] ring-2 ring-red-500/5"
-      )}>
-        
-       {/* Header Section: Identity & Control */}
-<div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-4 mb-8">
-  
-  {/* Voice Selection with clear Labeling */}
-  <div className="flex flex-col gap-2">
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
-      Select Voice Guide
-    </span>
-    <div className="p-1 bg-white/50 backdrop-blur-md rounded-2xl border border-white/60 shadow-sm inline-flex">
-      <VoiceSelector
-        selectedVoice={selectedVoice}
-        onChange={onVoiceChange}
-      />
-    </div>
-  </div>
+      {/* NAVIGATION HEADER */}
+      <div className="w-full max-w-5xl flex justify-between items-center px-2">
+        {canGoBack ? (
+          <button
+            onClick={onPrevious}
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-primary"
+          >
+            <ArrowLeft size={14} />
+            Previous Lesson
+          </button>
+        ) : (
+          <div />
+        )}
 
-  {/* Status Indicator */}
-  <div className="flex items-center gap-3 bg-white/60 px-4 py-2 rounded-full border border-white shadow-sm self-end md:self-auto">
-     <div className={cn(
-       "w-2 h-2 rounded-full", 
-       isRecording ? "bg-red-500 animate-pulse" : "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"
-     )} />
-     <span className="text-[10px] font-black uppercase tracking-widest text-primary italic">
-        {isRecording ? "Recording Live" : "Studio Ready"}
-     </span>
-  </div>
-</div>
+        {previousScore > 0 && (
+          <div className="text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-50 px-4 py-1.5 rounded-full border border-green-100">
+            Best Score: {previousScore}%
+          </div>
+        )}
+      </div>
 
-        {/* The Task */}
+      {/* MAIN INTERACTIVE STAGE */}
+      <div
+        className={cn(
+          "w-full max-w-5xl mx-auto p-6 md:p-10 relative overflow-hidden transition-transform duration-300",
+          "bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 shadow-premium",
+          isRecording && "scale-[0.99]",
+          isLocked && "pointer-events-none"
+        )}
+      >
+        {/* LOCK OVERLAY */}
+        <AnimatePresence>
+          {isLocked && (
+            <motion.div
+              className="absolute inset-0 z-50 bg-white/30 backdrop-blur-xl flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col items-center gap-3">
+                <Lock className="text-primary" size={24} />
+                <p className="text-xs font-bold uppercase tracking-tight">
+                  Classroom Locked
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* CONTROLS HEADER */}
+        <div className="flex justify-between items-center mb-8">
+          <VoiceSelector
+            selectedVoice={selectedVoice}
+            onChange={handleVoiceChange}
+          />
+
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {isRecording ? (
+              <span className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+                Listening...
+              </span>
+            ) : (
+              "Ready"
+            )}
+          </div>
+        </div>
+
+        {/* CONTENT CARD */}
         <WordCard english={english} yoruba={yoruba} tones={tones} />
 
-        {/* 2. CONSOLIDATED CONTROL CENTER (Play + Record) */}
+        {/* RECORDING & PLAYBACK ACTIONS */}
         <div className="mt-10 flex flex-col items-center gap-8">
-          
-          <div className="flex items-center justify-center gap-10">
-            {/* The Reference Audio Player */}
-            <div className="flex flex-col items-center gap-2">
-               <ParaPlayer audioUrl={referenceAudioUrl} />
-               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Listen</span>
-            </div>
+          <div className="flex gap-10">
+            <ParaPlayer audioUrl={referenceAudioUrl} />
 
-            {/* The Main Recorder */}
-            <div className="flex flex-col items-center gap-2">
-               <ParaRecorder
-                 isRecording={isRecording}
-                 onRecordingComplete={onRecordingComplete}
-                 onStart={onStartRecording}
-                 onStop={onStopRecording}
-               />
-               <span className={cn(
-                 "text-[8px] font-bold uppercase tracking-widest transition-colors",
-                 isRecording ? "text-red-500" : "text-slate-400"
-               )}>
-                 {isRecording ? "Stop" : "Record"}
-               </span>
-            </div>
+            <ParaRecorder
+              isRecording={isRecording}
+              onRecordingComplete={onRecordingComplete}
+              onStart={onStartRecording}
+              onStop={onStopRecording}
+            />
           </div>
 
-          {/* Waveform Visualization */}
-          <div className="w-full bg-black/5 rounded-[32px] p-4 border border-white/20">
+          {/* VISUAL FEEDBACK (WAVEFORM) */}
+          <div className="w-full bg-black/5 rounded-3xl p-4">
             <ParaWaveform
               originalAudio={referenceAudioUrl}
               userAudio={userAudioUrl}
@@ -115,47 +198,24 @@ export default function ParaWaveCompare({
             />
           </div>
         </div>
-
-        {/* 3. DIAGNOSTICS & NEXT STEPS */}
-        <AnimatePresence>
-          {hasRecorded && result && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mt-8 pt-8 border-t border-slate-200/40"
-            >
-              <ParaResult result={result} />
-              
-              {/* Navigation Actions nestled inside the result area */}
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                  className="rounded-full border-slate-200 hover:text-primary gap-2 text-xs font-bold"
-                >
-                  <RotateCcw size={14} /> Try Again
-                </Button>
-                <Button 
-                  onClick={onNext}
-                  className="rounded-full bg-primary text-white shadow-lg px-8 gap-2 text-xs font-bold"
-                >
-                  Next Word <ArrowRight size={14} />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Subtle Hint footer (Non-fixed) */}
-      {!hasRecorded && !isRecording && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest"
-        >
-          Listen to the guide, then tap record to practice
-        </motion.div>
+      {/* RESULTS OVERLAY */}
+      <ParaResultOverlay
+        isOpen={isOverlayOpen}
+        onClose={() => setIsOverlayOpen(false)}
+        result={result}
+        onRetry={handleRetry}
+        onNext={handleNext}
+        currentYorubaWord={yoruba}
+      />
+
+      {/* FOOTER HINT */}
+      {!hasRecorded && !isRecording && !isLocked && (
+        <div className="text-[10px] uppercase tracking-widest text-slate-400 flex items-center gap-2 animate-bounce">
+          <Lock size={12} />
+          Complete audio to continue
+        </div>
       )}
     </div>
   );

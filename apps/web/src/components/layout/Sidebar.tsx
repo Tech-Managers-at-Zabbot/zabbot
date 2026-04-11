@@ -11,6 +11,7 @@ import {
   Store,
   Settings,
   ChevronLeft,
+  Lock, // Added Lock icon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -29,8 +30,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     { name: "Ọ̀rẹ́", icon: Map, href: "/ai/ore" },
     { name: "Pàrà", icon: Layers, href: "/ai/para" },
     { name: "Òwe", icon: BookOpen, href: "/ai/owe" },
-    { name: "Marketplace", icon: Store, href: "/dashboard/marketplace" },
-    { name: "Leaderboard", icon: Trophy, href: "/dashboard/leaderboard" },
+    { name: "Marketplace", icon: Store, href: "/dashboard/marketplace", locked: true }, // Locked
+    { name: "Leaderboard", icon: Trophy, href: "/dashboard/leaderboard", locked: true }, // Locked
   ];
 
   return (
@@ -40,12 +41,9 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         isCollapsed ? "w-20" : "w-[260px]"
       )}
     >
-      {/* FLOATING GLASS PANEL */}
       <div className="absolute inset-0 rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200 shadow-xl" />
 
       <div className="relative z-10 flex flex-col h-full py-6 px-3">
-        
-        {/* COLLAPSE BUTTON */}
         <div className="flex items-center mb-10 justify-center">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -62,45 +60,57 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           </button>
         </div>
 
-        {/* NAVIGATION */}
         <nav className="flex-1 space-y-2">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
+            const isLocked = item.locked;
 
-            return (
-              <Link key={item.name} href={item.href}>
-                <motion.div
-                  whileTap={{ scale: 0.96, y: 1 }}
-                  whileHover={{ scale: 1.02 }}
-                  className={cn(
-                    "flex items-center gap-4 p-3.5 rounded-2xl transition-all cursor-pointer",
-                    isActive
-                      ? "bg-gradient-to-r from-[#162B6E] to-[#24A5EE] text-white shadow-md"
-                      : "text-slate-600 hover:text-[#162B6E] hover:bg-blue-50"
-                  )}
-                >
+            const content = (
+              <motion.div
+                whileTap={isLocked ? {} : { scale: 0.96, y: 1 }}
+                whileHover={isLocked ? {} : { scale: 1.02 }}
+                className={cn(
+                  "flex items-center gap-4 p-3.5 rounded-2xl transition-all",
+                  isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                  isActive && !isLocked
+                    ? "bg-gradient-to-r from-[#162B6E] to-[#24A5EE] text-white shadow-md"
+                    : "text-slate-600 hover:text-[#162B6E] hover:bg-blue-50"
+                )}
+              >
+                <div className="relative">
                   <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  {!isCollapsed && (
-                    <span className="font-semibold tracking-tight">
-                      {item.name}
-                    </span>
+                  {isLocked && (
+                    <div className="absolute -top-1 -right-1 bg-slate-200 rounded-full p-0.5 text-[#162B6E]">
+                      <Lock size={8} fill="currentColor" />
+                    </div>
                   )}
-                </motion.div>
+                </div>
+                {!isCollapsed && (
+                  <span className="font-semibold tracking-tight flex-1">
+                    {item.name}
+                  </span>
+                )}
+                {isLocked && !isCollapsed && <Lock size={14} className="text-slate-400" />}
+              </motion.div>
+            );
+
+            return isLocked ? (
+              <div key={item.name}>{content}</div>
+            ) : (
+              <Link key={item.name} href={item.href}>
+                {content}
               </Link>
             );
           })}
         </nav>
 
-        {/* FOOTER */}
         <Link href="/dashboard/settings" className="group mt-auto">
           <motion.div
             whileTap={{ scale: 0.96 }}
             className="pt-4 border-t border-slate-200 flex items-center gap-4 text-slate-500 hover:text-[#162B6E] transition-colors"
           >
             <Settings size={20} />
-            {!isCollapsed && (
-              <span className="text-sm font-medium">Settings</span>
-            )}
+            {!isCollapsed && <span className="text-sm font-medium">Settings</span>}
           </motion.div>
         </Link>
       </div>

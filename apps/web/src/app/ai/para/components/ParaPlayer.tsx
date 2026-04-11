@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface Props {
@@ -11,23 +11,29 @@ export default function ParaPlayer({ audioUrl }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audio.play().catch(() => {
+        // prevents autoplay rejection crash
+      });
       setIsPlaying(true);
     }
-  };
+  }, [isPlaying]);
 
   useEffect(() => {
-    const audioEl = audioRef.current;
-    if (!audioEl) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
     const handleEnded = () => setIsPlaying(false);
-    audioEl.addEventListener("ended", handleEnded);
-    return () => audioEl.removeEventListener("ended", handleEnded);
+
+    audio.addEventListener("ended", handleEnded);
+    return () => audio.removeEventListener("ended", handleEnded);
   }, []);
 
   return (
@@ -35,18 +41,27 @@ export default function ParaPlayer({ audioUrl }: Props) {
       <audio ref={audioRef} src={audioUrl} preload="auto" />
 
       <Button
-        className={`flex items-center justify-center gap-2 rounded-full p-4
-          ${isPlaying ? "bg-xp-yellow animate-pulse" : "bg-primary hover:bg-primary/90"} text-white`}
+        type="button"
+        aria-label={isPlaying ? "Pause audio" : "Play audio"}
+        className={`flex items-center justify-center gap-2 rounded-full p-4 text-white transition-all
+          ${
+            isPlaying
+              ? "bg-xp-yellow animate-pulse"
+              : "bg-primary hover:bg-primary/90"
+          }`}
         onClick={togglePlay}
       >
         {isPlaying ? "⏸️ Pause" : "▶️ Play"}
       </Button>
 
       <div className="flex gap-1 mt-2">
-        {[...Array(3)].map((_, i) => (
+        {Array.from({ length: 3 }).map((_, i) => (
           <span
             key={i}
-            className={`w-3 h-3 rounded-full bg-xp-yellow animate-bounce delay-[${i * 100}ms]`}
+            className="w-2.5 h-2.5 rounded-full bg-xp-yellow animate-bounce"
+            style={{
+              animationDelay: `${i * 120}ms`,
+            }}
           />
         ))}
       </div>

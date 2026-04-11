@@ -7,7 +7,7 @@ import { Play, Sparkles, ArrowRight, Zap, Target, Heart, X } from "lucide-react"
 import Image from "next/image";
 
 /**
- * NEURAL WORLD MAP COMPONENT - Refined for subtlety
+ * NEURAL WORLD MAP COMPONENT
  */
 function NeuralWorldMap() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,7 +28,7 @@ function NeuralWorldMap() {
     ];
 
     let particles: { x: number; y: number; tx: number; ty: number; vx: number; vy: number; size: number }[] = [];
-    const connectionDistance = 110; // Reduced for subtlety
+    const connectionDistance = 110;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -38,7 +38,7 @@ function NeuralWorldMap() {
     const init = () => {
       particles = [];
       continentNodes.forEach(node => {
-        for (let i = 0; i < 4; i++) { // Fewer particles
+        for (let i = 0; i < 4; i++) {
           const tx = (node.x / 100) * canvas.width;
           const ty = (node.y / 100) * canvas.height;
           particles.push({
@@ -48,7 +48,7 @@ function NeuralWorldMap() {
             ty: ty,
             vx: (Math.random() - 0.5) * 0.3,
             vy: (Math.random() - 0.5) * 0.3,
-            size: Math.random() * 1.2 + 0.8, // Smaller nodes
+            size: Math.random() * 1.2 + 0.8,
           });
         }
       });
@@ -56,8 +56,8 @@ function NeuralWorldMap() {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = "rgba(36, 165, 238, 0.08)"; // Lower opacity lines
-      ctx.fillStyle = "rgba(36, 165, 238, 0.2)"; // Lower opacity nodes
+      ctx.strokeStyle = "rgba(36, 165, 238, 0.08)";
+      ctx.fillStyle = "rgba(36, 165, 238, 0.2)";
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -103,8 +103,7 @@ export default function HeroSection() {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4 pt-20 pb-10 bg-[#EFF6FF]">
-      
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-0 pb-10 bg-[#EFF6FF]">
       <div className="absolute inset-0 z-0">
         <NeuralWorldMap />
         <motion.div 
@@ -114,26 +113,25 @@ export default function HeroSection() {
         />
       </div>
 
-      <div className="container max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center z-10">
-        
-        {/* LEFT: Copy */}
+      <div className="container max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center z-10">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center lg:text-left space-y-6"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center lg:text-left space-y-8"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-white/80 shadow-sm text-[#24A5EE] text-xs font-bold uppercase tracking-widest">
-            <Sparkles size={14} />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-blue-100 shadow-sm text-[#24A5EE] text-xs font-bold uppercase tracking-widest">
+            <Sparkles size={14} className="animate-pulse" />
             <span>The spark that powers language & culture</span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-extrabold leading-[1.1] text-[#162B6E]">
-            LEARN YOUR HERITAGE
+          <h1 className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05] text-[#162B6E]">
+            LEARN YOUR <br /> HERITAGE
             <br />
             <motion.span 
               animate={{ 
                 scale: [1, 1.02, 1],
-                textShadow: ["0 0 0px #24A5EE00", "0 0 15px #24A5EE66", "0 0 0px #24A5EE00"]
+                textShadow: ["0 0 0px #24A5EE00", "0 0 20px #24A5EE44", "0 0 0px #24A5EE00"]
               }}
               transition={{ duration: 4, repeat: Infinity }}
               className="text-[#24A5EE] inline-block mt-2"
@@ -142,53 +140,49 @@ export default function HeroSection() {
             </motion.span>
           </h1>
 
-          <p className="text-slate-600 text-lg max-w-lg mx-auto lg:mx-0 leading-relaxed">
-            Through AI powered cultural immersion.
+          <p className="text-slate-600 text-lg md:text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
+             Master the dialects of your ancestors through <span className="text-[#162B6E] font-semibold">AI-powered cultural immersion.</span>
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <motion.button 
               onClick={() => setIsSparkOpen(true)}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
-              className="group relative px-8 py-4 bg-[#24A5EE] text-white rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-400/30 overflow-hidden cursor-pointer"
+              className="group px-8 py-4 bg-[#24A5EE] text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-400/30 cursor-pointer"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                Start 60-Second Spark <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </span>
+              Start 60-Second Spark 
+              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </motion.button>
             
             <motion.button 
               onClick={() => setIsVideoOpen(true)}
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(36, 165, 238, 0.3)" }}
+              whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.9)" }}
               whileTap={{ scale: 0.98 }}
-              className="relative px-8 py-4 bg-white/60 text-[#162B6E] border border-white/80 rounded-2xl font-bold flex items-center justify-center gap-2 backdrop-blur-md shadow-sm transition-all group cursor-pointer"
+              className="px-8 py-4 bg-white/60 text-[#162B6E] border border-white/80 rounded-2xl font-bold flex items-center justify-center gap-3 backdrop-blur-md shadow-sm transition-all cursor-pointer"
             >
-              <Play size={18} fill="#FACC15" className="text-[#FACC15]" /> 
+              <div className="bg-[#FACC15] p-1 rounded-full">
+                <Play size={14} fill="white" className="text-white ml-0.5" /> 
+              </div>
               Watch Demo
             </motion.button>
           </div>
         </motion.div>
 
-        {/* RIGHT: Mascot & Sneak Peak */}
-        <motion.div className="relative flex justify-center items-center">
-          
-          {/* 1. Dashboard Pulse - Added floating animation and repositioned */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1 }}
+          className="relative flex justify-center items-center"
+        >
           <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ 
-              y: [5, -10, 5], // Independent floating motion
-              opacity: 0.9 
-            }}
-            transition={{ 
-              opacity: { delay: 0.8, duration: 0.5 },
-              y: { duration: 5, repeat: Infinity, ease: "easeInOut" } 
-            }}
-            className="absolute top-30 -right-4 md:-right-8 p-4 rounded-[28px] bg-white/70 backdrop-blur-xl border border-white/80 shadow-xl z-30 scale-90 md:scale-100"
+            animate={{ y: [0, -15, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-10 -right-2 md:right-0 p-5 rounded-[32px] bg-white/80 backdrop-blur-2xl border border-white shadow-2xl z-30 hidden sm:block"
           >
-            <div className="space-y-3">
-                <p className="text-[9px] text-[#24A5EE] uppercase font-black tracking-widest text-center">Dashboard Pulse</p>
-                <div className="flex items-center gap-2">
+            <div className="space-y-4">
+                <p className="text-[10px] text-[#24A5EE] uppercase font-black tracking-[0.2em] text-center">Dashboard Pulse</p>
+                <div className="flex items-center gap-3">
                     <DashboardMetric icon={Target} color="text-emerald-500" value="3 / 5" label="Lessons" />
                     <DashboardMetric icon={Zap} color="text-amber-500" value="1.2k" label="XP" />
                     <DashboardMetric icon={Heart} color="text-red-500" value="4" label="Hearts" />
@@ -196,25 +190,37 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          <motion.div className="relative w-full max-w-[450px] z-10">
+          <div className="relative w-full max-w-[500px] z-10">
             <motion.div
-              animate={{ y: [0, -15, 0] }}
+              animate={{ y: [0, -20, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="relative aspect-[4/5] w-full"
+              className="relative aspect-square w-full"
             >
-              <Image src="/mascots/parrot_map.png" alt="Zabbot" fill className="object-contain" priority />
+              <Image 
+                src="/mascots/parrot_map.png" 
+                alt="Zabbot Mascot" 
+                fill 
+                className="object-contain drop-shadow-2xl" 
+                priority 
+              />
               
               <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 0.9 }} 
-                transition={{ delay: 1 }}
-                className="absolute -bottom-[5%] left-1/2 -translate-x-1/2 w-[110%] h-[40%] z-20 pointer-events-none"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 1.2 }}
+                className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[110%] h-[40%] z-20 pointer-events-none"
               >
-                <Image src="https://res.cloudinary.com/dgotesgcy/image/upload/sqwopftine1ifaykvpca.svg" alt="Flags" fill className="object-contain" />
+                <Image 
+                  src="https://res.cloudinary.com/dgotesgcy/image/upload/sqwopftine1ifaykvpca.svg" 
+                  alt="Cultural Flags" 
+                  fill 
+                  className="object-contain" 
+                />
               </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
 
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-blue-400/5 rounded-full blur-3xl -z-10" />
         </motion.div>
       </div>
 
@@ -226,10 +232,10 @@ export default function HeroSection() {
 
 function DashboardMetric({ icon: Icon, color, value, label }: { icon: any; color: string; value: string; label: string }) {
     return (
-        <div className="flex flex-col items-center gap-1 p-2.5 rounded-xl bg-white/50 border border-white/80">
-            <Icon size={18} className={color} strokeWidth={2.5} />
-            <p className="text-sm font-black text-[#162B6E]">{value}</p>
-            <p className="text-[7px] font-bold text-slate-400 uppercase">{label}</p>
+        <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white shadow-sm border border-slate-50">
+            <Icon size={20} className={color} strokeWidth={2.5} />
+            <p className="text-base font-black text-[#162B6E]">{value}</p>
+            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">{label}</p>
         </div>
     )
 }
@@ -238,11 +244,37 @@ function VideoModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-[#162B6E]/80 backdrop-blur-md" />
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden">
-            <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-white/10 rounded-full text-white"><X size={24} /></button>
-            <iframe src="https://www.youtube.com/embed/mWBvbeLHVYs?autoplay=1" className="w-full h-full" allowFullScreen />
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-8">
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={onClose} 
+            className="absolute inset-0 bg-[#EFF6FF]/60 backdrop-blur-xl" 
+          />
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 40 }} 
+            animate={{ scale: 1, opacity: 1, y: 0 }} 
+            exit={{ scale: 0.9, opacity: 0, y: 40 }} 
+            /**
+             * SURGERY:
+             * - Added 'mt-20' to shift the video down from the header.
+             * - Changed 'max-w-5xl' to 'max-w-4xl' to make it slightly smaller.
+             */
+            className="relative w-full max-w-4xl mt-20 aspect-video bg-black rounded-[32px] overflow-hidden shadow-2xl border border-[#24A5EE]/20"
+          >
+            <button 
+              onClick={onClose} 
+              className="absolute top-6 right-6 z-50 p-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-[#162B6E] transition-colors border border-white/40 shadow-sm"
+            >
+              <X size={24} />
+            </button>
+            <iframe 
+              src="https://www.youtube.com/embed/mWBvbeLHVYs?autoplay=1" 
+              className="w-full h-full" 
+              allow="autoplay; encrypted-media" 
+              allowFullScreen 
+            />
           </motion.div>
         </div>
       )}

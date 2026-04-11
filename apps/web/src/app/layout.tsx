@@ -5,7 +5,9 @@ import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
 import GlobalHeader from "@/components/layout/GlobalHeader";
 
-// 1. FONTS
+// =========================
+// FONTS
+// =========================
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
@@ -24,41 +26,47 @@ const lexendExa = Lexend_Exa({
   display: "swap",
 });
 
+// =========================
+// METADATA
+// =========================
 export const metadata: Metadata = {
   title: "Zabbot | The Spark that Powers Language Connection",
-  description: "Learn your heritage language through AI-powered cultural immersion",
+  description:
+    "Learn your heritage language through AI-powered cultural immersion",
+
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.png",
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${lexend.variable} ${lexendExa.variable}`}
+      className={`${inter.variable} ${lexend.variable} ${lexendExa.variable} h-full`}
     >
-      <body className="antialiased selection:bg-primary/20">
-        {/* BYPASSING SYSTEM DARK MODE:
-            Setting defaultTheme="light" and enableSystem={false} 
-            ensures your brand's light-blue aesthetic loads first.
-        */}
-        <Providers 
-          attribute="class" 
-          defaultTheme="light" 
-          enableSystem={false}
-        >
+      <body className="antialiased min-h-screen flex flex-col">
+        {/* GLOBAL PROVIDERS */}
+        <Providers>
+          {/* HEADER */}
           <GlobalHeader />
-          
-          <main className="relative pt-24 min-h-screen">
+
+          {/* MAIN CONTENT */}
+          <main className="flex-1 pt-24 relative">
             {children}
           </main>
-          
+
+          {/* TOAST */}
           <Toaster position="top-center" richColors closeButton />
         </Providers>
       </body>

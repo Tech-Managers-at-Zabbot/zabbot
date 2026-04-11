@@ -1,10 +1,11 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-generator client {
-  provider = "prisma-client-js"
 }
 
 //////////////////////////////////////////////////////
@@ -80,74 +81,91 @@ enum Difficulty {
   ADVANCED
 }
 
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
 //////////////////////////////////////////////////////
-// USER (Updated for NextAuth / Removed Clerk)
+// USER
 //////////////////////////////////////////////////////
 
 model User {
-  id              String      @id @default(uuid())
-  name            String?
-  email           String?     @unique
-  emailVerified   DateTime?   // Required for NextAuth
-  image           String?     // Standard NextAuth image field
-  avatarUrl       String?     // Keeping your custom field for fallback
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  avatarUrl     String?
 
-  role            UserRole    @default(USER)
-  status          UserStatus  @default(ACTIVE)
+  role   UserRole   @default(USER)
+  status UserStatus @default(ACTIVE)
 
-  xp              Int         @default(0)
-  hearts          Int         @default(5)
+  isOnboarded Boolean @default(false)
 
-  currentStreak   Int         @default(0)
-  longestStreak   Int         @default(0)
-  streakFreezes   Int         @default(0)
-  isStreakFrozen  Boolean     @default(false)
-  lastStreakDate  DateTime?
+  xp     Int @default(0)
+  hearts Int @default(5)
 
-  bestParaScore   Int         @default(0)
-  paraRankTitle   String?
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  streakFreezes  Int       @default(0)
+  isStreakFrozen Boolean   @default(false)
+  lastStreakDate DateTime?
+
+  bestParaScore Int     @default(0)
+  paraRankTitle String?
 
   lastActive      DateTime?
-  themePreference String      @default("light")
+  themePreference String    @default("light")
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  deletedAt       DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
-  // Relations
-  conversations   AIConversationLog[]
-  sessions        AIConversationSession[]
-  activityLogs    ActivityLog[]
-  attempts        Attempt[]
-  initiatedLogs   AuditLog[] @relation("Initiator")
-  flashcards      Flashcard[]
-  subscription    Subscription?
-  achievements    UserAchievement[]
+  accounts     Account[]
+  sessions     Session[]
+  subscription Subscription?
+
+  activityLogs   ActivityLog[]
+  flashcards     Flashcard[]
+  xpTransactions XpTransaction[]
+  sparkSessions  SparkSession[]
+
+  conversations AIConversationLog[]
+  aiSessions    AIConversationSession[]
+
+  attempts  Attempt[]
+  auditLogs AuditLog[] @relation("Initiator")
+
+  achievements UserAchievement[]
+  vocabulary   UserVocabularyProgress[]
+
   progress        UserLessonProgress[]
-  vocabulary      UserVocabularyProgress[]
-  
-  // NextAuth Account Relation (Recommended for later)
-  accounts        Account[]
+  journeyProgress UserJourneyProgress[]
+
+  @@index([email])
 }
 
-// Added for NextAuth full integration support
 model Account {
-  id                 String  @id @default(uuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 //////////////////////////////////////////////////////
@@ -155,103 +173,139 @@ model Account {
 //////////////////////////////////////////////////////
 
 model Journey {
-  id              String        @id @default(uuid())
-  title           String
-  description     String?       @db.Text
-  imageThumbnail  String?
-  icon            String?
-  color           String?       @default("#162B6E")
-  order           Int
-  status          ContentStatus @default(DRAFT)
+  id             String        @id @default(uuid())
+  slug           String        @unique
+  title          String
+  description    String?       @db.Text
+  imageThumbnail String?
+  icon           String?
+  color          String?       @default("#162B6E")
+  order          Int
+  status         ContentStatus @default(DRAFT)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  deletedAt       DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  sparks          Spark[]
+  sparks         Spark[]
+  userProgress   UserJourneyProgress[]
+  xpTransactions XpTransaction[]
+  Media          Media[]
 }
 
 model Spark {
-  id              String        @id @default(uuid())
-  journeyId       String?
-  order           Int           @default(1)
+  id        String  @id @default(uuid())
+  journeyId String?
 
-  title           String
-  slug            String        @unique
-  description     String?       @db.Text
-  category        SparkCategory @default(LANGUAGE) // ✅ Now queryable!
+  order Int @default(1)
 
-  difficulty      Difficulty    @default(BEGINNER)
-  xpReward        Int           @default(50)
+  title       String
+  slug        String  @unique
+  description String? @db.Text
 
-  imageThumbnail  String?
-  bgColor         String?       @default("#24A5EE")
-  isPublished     Boolean       @default(false)
-  timeEstimate    Int?          @default(5)
-  status          ContentStatus @default(DRAFT)
+  category   SparkCategory @default(LANGUAGE)
+  difficulty Difficulty    @default(BEGINNER)
 
-  proverbYoruba   String?
-  proverbEnglish  String?
-  honorificRule   String? @db.Text
+  xpReward Int @default(50)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  imageThumbnail String?
+  bgColor        String? @default("#24A5EE")
 
-  contentBlocks   ContentBlock[]
-  exercises       Exercise[]
+  isPublished  Boolean @default(false)
+  timeEstimate Int?    @default(5)
+
+  status ContentStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  journey Journey? @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  contentBlocks ContentBlock[]
+  exercises     Exercise[]
+
+  sessions       SparkSession[]
+  xpTransactions XpTransaction[]
+
   userProgress    UserLessonProgress[]
-  vocabulary      Vocabulary[]
+  SparkVocabulary SparkVocabulary[]
+  Media           Media[]
+  Vocabulary      Vocabulary[]
 
-  journey         Journey? @relation(fields: [journeyId], references: [id], onDelete: Cascade)
-
-  @@index([journeyId, order])
+  @@index([journeyId])
   @@index([status])
-  @@index([category])
-  @@index([difficulty])
-  @@map("sparks_new")
+}
+
+model SparkVocabulary {
+  id           String @id @default(uuid())
+  sparkId      String
+  vocabularyId String
+
+  spark      Spark      @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([sparkId, vocabularyId])
+  @@index([sparkId])
+  @@index([vocabularyId])
 }
 
 //////////////////////////////////////////////////////
-// CONTENT
+// CONTENT & EXERCISES
 //////////////////////////////////////////////////////
 
 model ContentBlock {
-  id          String      @id @default(uuid())
-  type        ContentType
-  order       Int         @default(0)
+  id    String      @id @default(uuid())
+  type  ContentType
+  order Int         @default(0)
 
   yoruba      String?
   translation String?
-  grammar     String?     @db.Text
+  grammar     String? @db.Text
 
-  audioUrl    String?
-  videoUrl    String?
-  fileUrl     String?
+  audioUrl String?
+  videoUrl String?
+  fileUrl  String?
 
-  sparkId     String
-  spark       Spark       @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+  sparkId String
+  spark   Spark  @relation(fields: [sparkId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([sparkId])
 }
 
 model Exercise {
-  id            String       @id @default(uuid())
-  type          ExerciseType @default(MULTIPLE_CHOICE)
+  id   String       @id @default(uuid())
+  type ExerciseType @default(MULTIPLE_CHOICE)
 
   question      String
   options       String[]
-  optionsMeta   Json?        // ✅ NEW (non-breaking upgrade)
-  correctIndex  Int          @default(0)
+  optionsMeta   Json?
+  correctIndex  Int      @default(0)
   correctAnswer String?
-  explanation   String?      @db.Text
+  explanation   String?  @db.Text
 
-  sparkId       String
-  spark         Spark        @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+  sparkId String
+  spark   Spark  @relation(fields: [sparkId], references: [id], onDelete: Cascade)
 
+  @@index([sparkId])
+}
+
+model Media {
+  id        String    @id @default(uuid())
+  url       String
+  type      MediaType
+  alt       String?
+  createdAt DateTime  @default(now())
+
+  journeyId String?
+  sparkId   String?
+
+  journey Journey? @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  spark   Spark?   @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  @@index([journeyId])
   @@index([sparkId])
 }
 
@@ -260,20 +314,38 @@ model Exercise {
 //////////////////////////////////////////////////////
 
 model UserLessonProgress {
-  id          String    @id @default(uuid())
-  userId      String
-  sparkId     String
+  id String @id @default(uuid())
+
+  userId  String
+  sparkId String // THIS is your "lesson"
 
   score       Int       @default(0)
   completed   Boolean   @default(false)
   completedAt DateTime?
 
-  spark       Spark     @relation(fields: [sparkId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentIndex Int @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spark Spark @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, sparkId])
-  @@index([userId])
-  @@index([sparkId])
+}
+
+model UserJourneyProgress {
+  id          String    @id @default(uuid())
+  userId      String
+  journeyId   String
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journey Journey @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, journeyId])
 }
 
 //////////////////////////////////////////////////////
@@ -281,204 +353,82 @@ model UserLessonProgress {
 //////////////////////////////////////////////////////
 
 model Vocabulary {
-  id                 String   @id @default(uuid())
-  yorubaWord         String   @unique
-  englishTranslation String   @default("")
+  id                 String  @id @default(uuid())
+  yorubaWord         String  @unique
+  englishTranslation String  @default("")
   exampleSentence    String?
-
   tones              String?
-
   maleAudioUrl       String?
   femaleAudioUrl     String?
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt   // ✅ FIXED
-  deletedAt          DateTime?
+  sparkId String?
+  spark   Spark?  @relation(fields: [sparkId], references: [id], onDelete: Cascade)
 
-  sparkId            String?
-  phonemeStamps      PhonemeStamp[]
-  userProgress       UserVocabularyProgress[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  spark              Spark? @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+  phonemeStamps   PhonemeStamp[]
+  userProgress    UserVocabularyProgress[]
+  SparkVocabulary SparkVocabulary[]
 
   @@index([sparkId])
-  @@index([createdAt])
   @@index([yorubaWord])
-  @@index([englishTranslation])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+//////////////////////////////////
+// FOR AUTH SESSION //
+////////////////////////////////
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([identifier])
 }
 
 model PhonemeStamp {
-  id         String     @id @default(uuid())
-  vocabId    String
-  syllable   String
-  startTime  Float      @default(0)
-  endTime    Float      @default(0)
-  toneType   String
+  id        String @id @default(uuid())
+  vocabId   String
+  syllable  String
+  startTime Float  @default(0)
+  endTime   Float  @default(0)
+  toneType  String
 
   vocabulary Vocabulary @relation(fields: [vocabId], references: [id], onDelete: Cascade)
 }
 
-model UserVocabularyProgress {
-  id           String     @id @default(uuid())
-  userId       String
-  vocabularyId String
-
-  masteryLevel Int        @default(0)
-  lastReviewed DateTime   @default(now())
-
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, vocabularyId])
-}
-
 //////////////////////////////////////////////////////
-// AI CHAT
+// REVENUE & MISC
 //////////////////////////////////////////////////////
-
-model AIConversationSession {
-  id        String   @id @default(uuid())
-  userId    String
-
-  title     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs      AIConversationLog[]
-
-  @@index([userId])
-}
-
-model AIConversationLog {
-  id        String   @id @default(uuid())
-  userId    String
-  sessionId String
-
-  role      ChatRole
-  content   String   @db.Text
-
-  metadata   Json?
-  tokensUsed Int?
-
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session   AIConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([sessionId])
-  @@index([sessionId, createdAt])
-}
-
-//////////////////////////////////////////////////////
-// OTHER
-//////////////////////////////////////////////////////
-
-model ActivityLog {
-  id        String   @id @default(uuid())
-  userId    String
-  xpGained  Int
-  type      String
-
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model Attempt {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  score     Int      @default(0)
-  content   String?
-
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-model Flashcard {
-  id           String    @id @default(uuid())
-  userId       String
-  front        String
-  back         String
-
-  masteryLevel Int       @default(0)
-  nextReview   DateTime  @default(now())
-  lastReviewed DateTime?
-
-  createdAt    DateTime  @default(now())
-
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, back])
-}
-
-model Achievement {
-  id          String            @id @default(uuid())
-  title       String
-  description String
-  iconUrl     String
-  xpValue     Int               @default(100)
-
-  userAchievements UserAchievement[]
-}
-
-model UserAchievement {
-  id            String      @id @default(uuid())
-  userId        String
-  achievementId String
-
-  earnedAt      DateTime    @default(now())
-
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 model Subscription {
   id                     String          @id @default(uuid())
   userId                 String          @unique
-
   provider               PaymentProvider
   providerCustomerId     String?
   providerSubscriptionId String?
-
   plan                   String?
   status                 SubStatus       @default(TRIAL_ACTIVE)
-
   currentPeriodStart     DateTime?
   currentPeriodEnd       DateTime?
-  trialStart             DateTime?
-  trialEnd               DateTime?
-
-  cancelAtPeriodEnd      Boolean         @default(false)
-  cancelledAt            DateTime?
-
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
-  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([providerCustomerId])
-  @@index([providerSubscriptionId])
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  event     String
-  status    String
-  timestamp DateTime @default(now())
-
-  userId    String
-  user      User     @relation("Initiator", fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TodaysWord {
@@ -488,4 +438,120 @@ model TodaysWord {
   meaning     String
   displayDate DateTime @unique
   createdAt   DateTime @default(now())
+}
+
+// Keeping basic logging models as is
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  xpGained  Int
+  type      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Flashcard {
+  id           String   @id @default(uuid())
+  userId       String
+  front        String
+  back         String
+  masteryLevel Int      @default(0)
+  nextReview   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, back])
+}
+
+model XpTransaction {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Int
+  source    String
+  sparkId   String?
+  journeyId String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spark     Spark?   @relation(fields: [sparkId], references: [id])
+  journey   Journey? @relation(fields: [journeyId], references: [id])
+}
+
+model SparkSession {
+  id        String   @id @default(uuid())
+  userId    String
+  sparkId   String
+  startedAt DateTime @default(now())
+  completed Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spark     Spark    @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+}
+
+model AIConversationSession {
+  id        String              @id @default(uuid())
+  userId    String
+  title     String?
+  createdAt DateTime            @default(now())
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs      AIConversationLog[]
+}
+
+model AIConversationLog {
+  id        String                @id @default(uuid())
+  userId    String
+  sessionId String
+  role      ChatRole
+  content   String                @db.Text
+  createdAt DateTime              @default(now())
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   AIConversationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Attempt {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id       String @id @default(uuid())
+  event    String
+  status   String
+  metadata Json?
+
+  timestamp DateTime @default(now())
+
+  userId String
+  user   User   @relation("Initiator", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Achievement {
+  id               String            @id @default(uuid())
+  title            String
+  xpValue          Int               @default(100)
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime    @default(now())
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserVocabularyProgress {
+  id           String     @id @default(uuid())
+  userId       String
+  vocabularyId String
+  masteryLevel Int        @default(0)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vocabularyId])
 }

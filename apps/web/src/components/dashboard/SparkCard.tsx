@@ -16,13 +16,12 @@ const SparkCard: React.FC<Props> = ({ spark }) => {
       className="group block rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-lg border border-white/40 shadow-md hover:scale-[1.03] transition-transform duration-300 ease-in-out"
     >
       {/* Image */}
-      <div className="relative h-[140px] w-full">
+      <div className="relative h-[140px] w-full bg-slate-100">
         <Image
-          src={spark.image || "/assets/placeholders/zabbot-spark.jpg"}
+          src={spark.imageThumbnail || "/assets/placeholders/zabbot-spark.jpg"}
           alt={spark.title}
           fill
           className="object-cover"
-          priority={false}
           sizes="(max-width: 768px) 100vw, 260px"
         />
       </div>
@@ -34,8 +33,8 @@ const SparkCard: React.FC<Props> = ({ spark }) => {
         </h3>
 
         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-          <span>{spark.duration}</span>
-          <span className="text-[#FACC15]">+{spark.xp} XP</span>
+          <span>{spark.timeEstimate ?? 5} min</span>
+          <span className="text-[#FACC15]">+{spark.xpReward} XP</span>
         </div>
       </div>
     </Link>

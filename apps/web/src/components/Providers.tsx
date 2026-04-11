@@ -2,18 +2,19 @@
 
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ThemeProviderProps } from "next-themes";
+import { SessionProvider } from "next-auth/react";
 
-export function Providers({ children, ...props }: ThemeProviderProps) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="light"      // Zabbot default
-      enableSystem={false}      // Force light mode preference
-      disableTransitionOnChange={false} // Smooth transitions enabled
-      {...props}                // Allows layout.tsx to override or pass additional props
-    >
-      {children}
-    </NextThemesProvider>
+    <SessionProvider>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        disableTransitionOnChange={false}
+      >
+        {children}
+      </NextThemesProvider>
+    </SessionProvider>
   );
 }

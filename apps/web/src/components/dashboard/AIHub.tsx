@@ -2,14 +2,14 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  BotMessageSquare, 
-  Mic, 
-  BookOpenText, 
-  ArrowUpRight, 
-  Sparkles 
+import {
+  BotMessageSquare,
+  Mic,
+  BookOpenText,
+  ArrowUpRight,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Feature {
   icon: React.ElementType;
@@ -18,7 +18,7 @@ interface Feature {
   mascot: string;
   gradient: string;
   delay: number;
-  link: string; // added custom link property
+  link: string;
 }
 
 const features: Feature[] = [
@@ -29,7 +29,7 @@ const features: Feature[] = [
     mascot: "/mascots/Ore.png",
     gradient: "from-[#162B6E] to-[#24A5EE]",
     delay: 0.1,
-    link: "/ai/ore", // custom link
+    link: "/ai/ore",
   },
   {
     icon: Mic,
@@ -54,20 +54,19 @@ const features: Feature[] = [
 export default function AIHub() {
   return (
     <section className="py-12 px-4 relative overflow-hidden">
-      <div className="max-w-full mx-auto text-center">
+      <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
-        <div className="mb-8">
-
-          <h2 className="text-xl md:text-3xl font-extrabold text-[#162B6E] leading-tight mx-auto max-w-xs md:max-w-sm">
+        <div className="mb-8 text-left">
+          <h2 className="text-xl md:text-3xl font-extrabold text-[#162B6E] leading-tight max-w-sm">
             Learn visually. Speak naturally.
           </h2>
         </div>
 
         {/* AGENT CARDS */}
-        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-x-auto md:overflow-visible pb-4 scrollbar-hide">
+        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-x-auto md:overflow-visible pb-4 snap-x snap-mandatory">
           {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} />
+            <FeatureCard key={index} {...feature} index={index} />
           ))}
         </div>
       </div>
@@ -75,18 +74,28 @@ export default function AIHub() {
   );
 }
 
-function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay, link }: Feature) {
+function FeatureCard({
+  icon: Icon,
+  title,
+  tag,
+  mascot,
+  gradient,
+  delay,
+  link,
+  index,
+}: Feature & { index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
       viewport={{ once: true }}
-      whileHover={{ y: -4 }}
-      className="min-w-[260px] md:min-w-0 group"
+      whileHover={{ y: -6 }}
+      className="min-w-[260px] md:min-w-0 group snap-start"
     >
-      <div className={`relative h-[300px] rounded-[28px] overflow-hidden bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between shadow-xl`}>
-
+      <div
+        className={`relative h-[300px] rounded-[28px] overflow-hidden bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between shadow-xl`}
+      >
         {/* BACKGROUND BLOBS */}
         <div className="absolute -top-10 -right-10 w-36 h-36 bg-white/20 rounded-full blur-2xl" />
         <div className="absolute bottom-0 left-0 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
@@ -113,7 +122,8 @@ function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay, link }: 
             alt={`Mascot of ${title} AI agent`}
             fill
             className="object-contain drop-shadow-2xl"
-            loading="lazy"
+            loading={index === 0 ? "eager" : "lazy"}
+            priority={index === 0}
           />
         </motion.div>
 
@@ -123,9 +133,9 @@ function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay, link }: 
             {title}
           </h3>
 
-          <a href={link} aria-label={`Open ${title} agent`} className="block group/btn">
+          <Link href={link} aria-label={`Open ${title} agent`} className="block group/btn">
             <motion.div
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
               className="relative overflow-hidden w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer"
             >
@@ -138,13 +148,13 @@ function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay, link }: 
               <motion.span
                 className="relative z-10 flex items-center"
                 initial={{ x: 0, y: 0 }}
-                whileHover={{ x: 2, y: -2 }}
+                whileHover={{ x: 3, y: -3 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <ArrowUpRight size={14} />
               </motion.span>
             </motion.div>
-          </a>
+          </Link>
         </div>
 
         {/* HOVER GLOW */}

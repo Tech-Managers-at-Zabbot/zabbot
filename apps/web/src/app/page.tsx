@@ -15,57 +15,60 @@ export default function LandingPage() {
   return (
     <main className="relative selection:bg-zabbot-primary/30 overflow-x-hidden">
       
-      {/* 🌌 GLOBAL BACKGROUND (kept) */}
+      {/* 🌌 GLOBAL BACKGROUND */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="zabbot-blob zabbot-blob-blue" />
         <div className="zabbot-blob zabbot-blob-purple opacity-20" />
       </div>
 
-      {/* 📱 APP-LIKE STACK (NO MORE WEBSITE SPACING) */}
-      <div className="relative z-10 flex flex-col gap-16 pb-32">
+      {/* 📱 APP-LIKE FLOW */}
+      <div className="relative z-10 flex flex-col pb-32">
 
-        {/* 1. HERO (HOOK) */}
-        <section className="px-4 pt-6">
-          <HeroSection />
-        </section>
+        {/* 1. HERO (FLUSH TO TOP) */}
+        <HeroSection />
 
-        {/* 2. COMPARISON (IMMEDIATE DIFFERENTIATION) ✅ */}
-        <section className="px-4">
-          <ComparisonSection />
-        </section>
+        {/* 2. CONTENT FLOW */}
+        <div className="flex flex-col gap-24 mt-16">
 
-        {/* 3. PRODUCT IMMERSION */}
-        <section className="px-4">
-          <DashboardPeek />
-        </section>
+          {/* 🔥 DIFFERENTIATION */}
+          <section className="px-4">
+            <ComparisonSection />
+          </section>
 
-        {/* 4. FEATURES (NOW CONTEXTUAL) */}
-        <section id="features" className="px-4">
-          <FeaturesGrid />
-        </section>
+          {/* 🧠 PRODUCT IMMERSION */}
+          <section className="px-4">
+            <DashboardPeek />
+          </section>
 
-        {/* 5. SOCIAL PROOF */}
-        <section className="px-4">
-          <PartnerTicker />
-        </section>
+          {/* ⚡ FEATURES */}
+          <section id="features" className="px-4">
+            <FeaturesGrid />
+          </section>
 
-        {/* 6. PRICING (DECISION MOMENT) */}
-        <section id="pricing" className="px-4">
-          <PricingBento />
-        </section>
+          {/* 🌍 SOCIAL PROOF */}
+          <section className="px-4">
+            <PartnerTicker />
+          </section>
 
-        {/* 7. TRUST (LATE-STAGE ONLY) */}
-        <section className="px-4">
-          <TeamSection />
-        </section>
+          {/* 💰 PRICING */}
+          <section id="pricing" className="px-4">
+            <PricingBento />
+          </section>
 
-        {/* 8. FINAL CTA */}
-        <section className="px-4 pb-10">
-          <FooterCTA />
-        </section>
+          {/* 👥 TEAM / TRUST */}
+          <section className="px-4">
+            <TeamSection />
+          </section>
+
+          {/* 🚀 FINAL CTA */}
+          <section className="px-4 pb-10">
+            <FooterCTA />
+          </section>
+
+        </div>
       </div>
 
-      {/* 📱 MOBILE NAV (FLOATING APP CONTROL) */}
+      {/* 📱 MOBILE NAV */}
       <div className="block md:hidden">
         <MobileNav />
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Spark } from "@/types/spark";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import JourneyNode from "./JourneyNode";
 import JourneyConnector from "./JourneyConnector";
 
@@ -10,23 +10,41 @@ interface Props {
 }
 
 export default function JourneyPath({ sparks }: Props) {
-  if (!sparks || sparks.length === 0) return null;
+  const activeRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, []);
+
+  if (!sparks?.length) return null;
 
   return (
-    <section className="space-y-10 py-4">
-      <div className="flex flex-col items-center">
+    <section className="py-6">
+      <div className="flex flex-col items-center gap-1">
         {sparks.map((spark, index) => {
           const isLast = index === sparks.length - 1;
+          const isActive = spark.uiStatus === "active";
+
           return (
             <React.Fragment key={spark.id}>
-              {/* NODE */}
-              <JourneyNode spark={spark} index={index} />
+              <div
+                ref={isActive ? activeRef : null}
+                className="transition-all"
+              >
+                <JourneyNode spark={spark} index={index} />
+              </div>
 
-              {/* CONNECTOR */}
               {!isLast && (
-                <JourneyConnector
-                  completed={spark.uiStatus === "completed"}
-                />
+                <div className="h-10 flex items-center justify-center">
+                  <JourneyConnector
+                    completed={spark.uiStatus === "completed"}
+                  />
+                </div>
               )}
             </React.Fragment>
           );

@@ -1,59 +1,157 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
+type PracticeItemInput = {
+  english: string;
+  yoruba: string;
+  tones?: string[];
+  audio?: {
+    male?: string;
+    female?: string;
+  };
+  lessonId?: string;
+};
+
+function normalizeTones(tones?: string[] | string) {
+  if (!tones) return "";
+  return Array.isArray(tones) ? tones.join(" ") : String(tones);
+}
+
+function normalizeAudio(audio?: PracticeItemInput["audio"]) {
+  return {
+    male: audio?.male || "",
+    female: audio?.female || "",
+  };
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { yoruba, english, tones, audio } = body;
+    const body = await req.json().catch(() => null);
 
-    if (!yoruba) {
-      return new NextResponse("Yoruba word is required", { status: 400 });
+    if (!body) {
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON body" },
+        { status: 400 }
+      );
     }
 
-    // 1. DATABASE UPSERT
-    // The @unique constraint on yorubaWord in schema.prisma 
-    // allows us to use it in the 'where' clause.
-    const practiceItem = await db.vocabulary.upsert({
-      where: { 
-        yorubaWord: yoruba 
-      },
-      update: {
-        englishTranslation: english || "",
-        tones: tones || "", // Supporting the Do-Re-Mi visual logic
-        maleAudioUrl: audio.male,
-        femaleAudioUrl: audio.female,
-        updatedAt: new Date(),
-      },
-      create: {
-        yorubaWord: yoruba,
-        englishTranslation: english || "",
-        tones: tones || "",
-        maleAudioUrl: audio.male,
-        femaleAudioUrl: audio.female,
-      },
-    });
+    const rawItems =
+      body.items || (Array.isArray(body) ? body : [body]);
 
-    return NextResponse.json(practiceItem);
-  } catch (error) {
+    const items: PracticeItemInput[] = Array.isArray(rawItems)
+      ? rawItems
+      : [rawItems];
+
+    if (!items.length) {
+      return NextResponse.json(
+        { success: false, error: "No items provided" },
+        { status: 400 }
+      );
+    }
+
+    const globalLessonId = body.lessonId || null;
+
+    let successCount = 0;
+
+    const results = await Promise.all(
+      items.map(async (item) => {
+        try {
+          if (!item?.yoruba || !item?.english) {
+            return null;
+          }
+
+          const lessonId =
+            item.lessonId || globalLessonId || null;
+
+          const result = await db.vocabulary.upsert({
+            where: {
+              yorubaWord: item.yoruba,
+            },
+            update: {
+              englishTranslation: item.english,
+              tones: normalizeTones(item.tones),
+              maleAudioUrl: normalizeAudio(item.audio).male,
+              femaleAudioUrl: normalizeAudio(item.audio).female,
+              lessonId,
+              updatedAt: new Date(),
+            },
+            create: {
+              yorubaWord: item.yoruba,
+              englishTranslation: item.english,
+              tones: normalizeTones(item.tones),
+              maleAudioUrl: normalizeAudio(item.audio).male,
+              femaleAudioUrl: normalizeAudio(item.audio).female,
+              lessonId,
+            },
+          });
+
+          successCount++;
+          return result;
+        } catch (err) {
+          console.error(
+            "[PRACTICE_ITEM_UPSERT_ERROR]",
+            {
+              item,
+              error: err,
+            }
+          );
+          return null;
+        }
+      })
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Practice items synced successfully",
+      total: items.length,
+      successCount,
+      failedCount: items.length - successCount,
+      lessonId: globalLessonId,
+      items: results.filter(Boolean),
+    });
+  } catch (error: any) {
     console.error("[PRACTICE_ITEMS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Upload failed",
+        details: error?.message || "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
-/**
- * GET handler to fetch current practice set
- * Aligned with Zabbot Design System MVP
- */
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const lessonId = searchParams.get("lessonId");
+
     const items = await db.vocabulary.findMany({
-      take: 20,
-      orderBy: { updatedAt: 'desc' }
+      where: lessonId ? { lessonId } : undefined,
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    return NextResponse.json(items);
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      lessonId: lessonId || null,
+      items,
+    });
+  } catch (error: any) {
     console.error("[PRACTICE_ITEMS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Database fetch failed",
+        details: error?.message || "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
