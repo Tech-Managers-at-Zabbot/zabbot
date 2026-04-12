@@ -1,36 +1,99 @@
-import { useState, useMemo } from "react";
-import { Spark } from "@/types/spark";
+import { useState, useMemo, useCallback } from "react";
+import { SparkCardVM } from "@/types/view-models";
 
-export default function useSparkManager(sparks: Spark[]) {
-  const [activeId, setActiveId] = useState<string | null>(sparks[0]?.id ?? null);
-  const [completedSparks, setCompletedSparks] = useState<Set<string>>(new Set());
+export default function useSparkManager(sparks: SparkCardVM[]) {
   const STACK_SIZE = 2;
+
+  const [activeId, setActiveId] = useState<string | null>(
+    sparks?.[0]?.id ?? null
+  );
+
+  const [completedSparks, setCompletedSparks] = useState<Set<string>>(
+    () => new Set()
+  );
+
   const [currentPage, setCurrentPage] = useState(0);
 
-  const sortedSparks = useMemo(() => [...sparks].sort((a, b) => (new Date(a.createdAt ?? 0).getTime()) - (new Date(b.createdAt ?? 0).getTime())), [sparks]);
+  /**
+   * ✅ VM-safe sorting (NO DB DEPENDENCY)
+   * Keeps backend-provided order OR transformation order
+   */
+  const sortedSparks = useMemo(() => {
+    if (!Array.isArray(sparks)) return [];
+    return [...sparks];
+  }, [sparks]);
 
-  const activeSpark = sortedSparks.find(s => s.id === activeId) || sortedSparks[0];
-  const queueSparks = sortedSparks.filter(s => s.id !== activeId);
-  const totalPages = Math.ceil(queueSparks.length / STACK_SIZE);
-  const paginatedSparks = queueSparks.slice(currentPage * STACK_SIZE, (currentPage + 1) * STACK_SIZE);
+  /**
+   * ✅ Active spark resolution
+   */
+  const activeSpark = useMemo(() => {
+    return (
+      sortedSparks.find((s) => s.id === activeId) ||
+      sortedSparks[0] ||
+      null
+    );
+  }, [sortedSparks, activeId]);
 
-  const completeActiveSpark = () => {
+  /**
+   * ✅ Queue (everything except active)
+   */
+  const queueSparks = useMemo(() => {
+    if (!activeSpark) return sortedSparks;
+    return sortedSparks.filter((s) => s.id !== activeSpark.id);
+  }, [sortedSparks, activeSpark]);
+
+  /**
+   * ✅ Pagination derived safely
+   */
+  const totalPages = useMemo(() => {
+    return Math.ceil(queueSparks.length / STACK_SIZE);
+  }, [queueSparks.length]);
+
+  const paginatedSparks = useMemo(() => {
+    return queueSparks.slice(
+      currentPage * STACK_SIZE,
+      (currentPage + 1) * STACK_SIZE
+    );
+  }, [queueSparks, currentPage]);
+
+  /**
+   * ✅ FIXED: safe state update (NO mutation)
+   */
+  const completeActiveSpark = useCallback(() => {
     if (!activeSpark) return;
-    setCompletedSparks(prev => new Set(prev.add(activeSpark.id)));
-    const nextSpark = sortedSparks.find(s => !completedSparks.has(s.id) && s.id !== activeSpark.id);
-    setActiveId(nextSpark?.id ?? null);
-  };
+
+    setCompletedSparks((prev) => {
+      const next = new Set(prev);
+      next.add(activeSpark.id);
+      return next;
+    });
+
+    setActiveId((prevActiveId) => {
+      const nextSpark =
+        sortedSparks.find(
+          (s) =>
+            s.id !== activeSpark.id &&
+            !completedSparks.has(s.id)
+        ) || null;
+
+      return nextSpark?.id ?? null;
+    });
+  }, [activeSpark, sortedSparks, completedSparks]);
 
   return {
     activeSpark,
     queueSparks,
     paginatedSparks,
+
     activeId,
     setActiveId,
+
     completeActiveSpark,
+
     currentPage,
     setCurrentPage,
+
     totalPages,
-    STACK_SIZE
+    STACK_SIZE,
   };
 }

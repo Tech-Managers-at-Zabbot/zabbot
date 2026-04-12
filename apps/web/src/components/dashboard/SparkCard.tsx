@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { Spark } from "@/types/spark";
+import { SparkCardVM } from "@/types/view-models";
 
 interface Props {
-  spark: Spark;
+  spark: SparkCardVM;
 }
 
 const SparkCard: React.FC<Props> = ({ spark }) => {
@@ -18,7 +18,7 @@ const SparkCard: React.FC<Props> = ({ spark }) => {
       {/* Image */}
       <div className="relative h-[140px] w-full bg-slate-100">
         <Image
-          src={spark.imageThumbnail || "/assets/placeholders/zabbot-spark.jpg"}
+          src={spark.image}
           alt={spark.title}
           fill
           className="object-cover"
@@ -33,8 +33,8 @@ const SparkCard: React.FC<Props> = ({ spark }) => {
         </h3>
 
         <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-          <span>{spark.timeEstimate ?? 5} min</span>
-          <span className="text-[#FACC15]">+{spark.xpReward} XP</span>
+          <span>{spark.duration}</span>
+          <span className="text-[#FACC15]">+{spark.xp} XP</span>
         </div>
       </div>
     </Link>

@@ -132,12 +132,34 @@ export default function GlobalHeader() {
             ) : (
               <Link href="/login">
                 <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-2 text-white bg-gradient-to-br from-[#24A5EE] to-[#162B6E] shadow-md"
-                >
-                  Start Free Trial <Zap size={12} />
-                </motion.button>
+  whileHover={{ y: -1 }}
+  whileTap={{ scale: 0.97 }}
+  className="
+    px-4 py-2
+    rounded-xl
+    font-black text-[10px]
+    uppercase tracking-wider
+    flex items-center gap-2
+
+    text-[#162B6E]
+
+    bg-white/40
+    backdrop-blur-xl
+
+    border border-orange-300/60
+
+    shadow-[0_8px_30px_rgba(22,43,110,0.08)]
+
+    hover:bg-white/60
+    hover:border-orange-400/80
+    hover:shadow-[0_10px_40px_rgba(22,43,110,0.12),0_0_25px_rgba(251,146,60,0.25)]
+    hover:-translate-y-[1px]
+
+    transition-all duration-300
+  "
+>
+  Start Free Trial <Zap size={12} />
+</motion.button>
               </Link>
             )}
 

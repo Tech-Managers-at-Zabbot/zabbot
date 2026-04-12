@@ -6,23 +6,23 @@ import { Toaster } from "sonner";
 import GlobalHeader from "@/components/layout/GlobalHeader";
 
 // =========================
-// FONTS
+// FONTS (FIXED & CONSISTENT)
 // =========================
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--font-inter",
   display: "swap",
 });
 
 const lexend = Lexend({
   subsets: ["latin"],
-  variable: "--font-heading",
+  variable: "--font-lexend",
   display: "swap",
 });
 
 const lexendExa = Lexend_Exa({
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-lexend-exa",
   display: "swap",
 });
 
@@ -55,18 +55,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${lexend.variable} ${lexendExa.variable} h-full`}
     >
-      <body className="antialiased min-h-screen flex flex-col">
-        {/* GLOBAL PROVIDERS */}
+      <body className="antialiased min-h-screen flex flex-col font-sans bg-background text-foreground">
         <Providers>
-          {/* HEADER */}
           <GlobalHeader />
 
-          {/* MAIN CONTENT */}
           <main className="flex-1 pt-24 relative">
             {children}
           </main>
 
-          {/* TOAST */}
           <Toaster position="top-center" richColors closeButton />
         </Providers>
       </body>

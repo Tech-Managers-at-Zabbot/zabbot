@@ -54,7 +54,7 @@ async function main() {
         status: "ACTIVE",
 
         imageThumbnail:
-          "https://your-cdn.com/images/sparks/greetings-1.jpg",
+          "/placeholders/zabbot-spark.png",
 
         bgColor: "#24A5EE",
         timeEstimate: 5,
@@ -77,7 +77,7 @@ async function main() {
         status: "ACTIVE",
 
         imageThumbnail:
-          "https://your-cdn.com/images/sparks/introductions.jpg",
+          "/lessons/introductions.png",
 
         bgColor: "#1E90FF",
         timeEstimate: 6,

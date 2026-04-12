@@ -1,0 +1,17 @@
+{
+  "journeys": [
+    {
+      "slug": "yoruba-basics",
+      "title": "Yoruba Basics",
+      "order": 1
+    }
+  ],
+  "sparks": [
+    {
+      "slug": "greetings",
+      "title": "Greetings",
+      "journeySlug": "yoruba-basics",
+      "xpReward": 50
+    }
+  ]
+}

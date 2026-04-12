@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 type PracticeItemInput = {
   english: string;
   yoruba: string;
-  tones?: string[];
+  tones?: string[] | string;
   audio?: {
     male?: string;
     female?: string;
   };
-  lessonId?: string;
+  lessonId?: string; // API-level name (maps to sparkId)
 };
 
 function normalizeTones(tones?: string[] | string) {
@@ -62,8 +62,11 @@ export async function POST(req: Request) {
             return null;
           }
 
-          const lessonId =
-            item.lessonId || globalLessonId || null;
+          // 🔁 MAP lessonId → sparkId
+          const sparkId = item.lessonId || globalLessonId || null;
+
+          const tones = normalizeTones(item.tones);
+          const audio = normalizeAudio(item.audio);
 
           const result = await db.vocabulary.upsert({
             where: {
@@ -71,32 +74,29 @@ export async function POST(req: Request) {
             },
             update: {
               englishTranslation: item.english,
-              tones: normalizeTones(item.tones),
-              maleAudioUrl: normalizeAudio(item.audio).male,
-              femaleAudioUrl: normalizeAudio(item.audio).female,
-              lessonId,
+              tones,
+              maleAudioUrl: audio.male,
+              femaleAudioUrl: audio.female,
+              sparkId, // ✅ FIXED
               updatedAt: new Date(),
             },
             create: {
               yorubaWord: item.yoruba,
               englishTranslation: item.english,
-              tones: normalizeTones(item.tones),
-              maleAudioUrl: normalizeAudio(item.audio).male,
-              femaleAudioUrl: normalizeAudio(item.audio).female,
-              lessonId,
+              tones,
+              maleAudioUrl: audio.male,
+              femaleAudioUrl: audio.female,
+              sparkId, // ✅ FIXED
             },
           });
 
           successCount++;
           return result;
         } catch (err) {
-          console.error(
-            "[PRACTICE_ITEM_UPSERT_ERROR]",
-            {
-              item,
-              error: err,
-            }
-          );
+          console.error("[PRACTICE_ITEM_UPSERT_ERROR]", {
+            item,
+            error: err,
+          });
           return null;
         }
       })
@@ -130,8 +130,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const lessonId = searchParams.get("lessonId");
 
+    // 🔁 MAP lessonId → sparkId
+    const whereClause = lessonId
+      ? { sparkId: lessonId }
+      : {};
+
     const items = await db.vocabulary.findMany({
-      where: lessonId ? { lessonId } : undefined,
+      where: whereClause,
       orderBy: {
         createdAt: "desc",
       },

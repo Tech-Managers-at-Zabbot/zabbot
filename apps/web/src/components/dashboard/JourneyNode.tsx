@@ -2,15 +2,17 @@
 
 import { Check, Lock } from "lucide-react";
 import Link from "next/link";
-import { Spark } from "@/types/spark";
+import { SparkCardVM } from "@/types/view-models";
 
 interface Props {
-  spark: Spark;
+  spark: SparkCardVM;
   index: number;
 }
 
 export default function JourneyNode({ spark, index }: Props) {
-  // ✅ SAFE FALLBACK (critical fix)
+  /**
+   * ✅ Normalized state with safe fallback
+   */
   const status = spark.uiStatus ?? "locked";
 
   const isLocked = status === "locked";
@@ -18,9 +20,9 @@ export default function JourneyNode({ spark, index }: Props) {
   const isActive = status === "active";
 
   const baseStyle =
-    "w-16 h-16 rounded-full flex items-center justify-center font-black transition-all duration-300 glass-shiny-edge shadow-md";
+    "w-16 h-16 rounded-full flex items-center justify-center font-black transition-all duration-300 glass-shiny-edge shadow-md select-none";
 
-  const styles = isLocked
+  const stateStyle = isLocked
     ? "bg-slate-200 text-slate-400 border-slate-300"
     : isCompleted
     ? "bg-[#16A34A] text-white shadow-green-200/50"
@@ -38,22 +40,34 @@ export default function JourneyNode({ spark, index }: Props) {
     </span>
   );
 
+  /**
+   * ❌ Locked nodes are NOT interactive
+   * → removed role="button"
+   * → removed misleading semantics
+   */
   if (isLocked) {
     return (
       <div
-        className={`${baseStyle} ${styles}`}
+        className={`${baseStyle} ${stateStyle}`}
         aria-disabled="true"
-        role="button"
+        aria-label="Locked lesson"
       >
         {content}
       </div>
     );
   }
 
+  /**
+   * ✅ Active + completed are clickable
+   */
   return (
-    <Link href={`/lesson/${spark.slug}`} aria-label={`Open lesson ${spark.title}`}>
+    <Link
+      href={`/lesson/${spark.slug}`}
+      aria-label={`Open lesson ${spark.title}`}
+      className="inline-block"
+    >
       <div
-        className={`${baseStyle} ${styles} hover:scale-110 active:scale-95 cursor-pointer`}
+        className={`${baseStyle} ${stateStyle} hover:scale-110 active:scale-95 cursor-pointer`}
       >
         {content}
       </div>

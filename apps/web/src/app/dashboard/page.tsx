@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { ContentStatus } from "@prisma/client";
-import ContinueLearningCard from "@/components/dashboard/ContinueLearningCard";
+import { ContentStatus, Prisma } from "@prisma/client";
+
+import ContinueLearningCardClient from "@/components/dashboard/ContinueLearningCardClient";
 import SparksCarousel from "@/components/dashboard/SparksCarousel";
 import JourneyPath from "@/components/dashboard/JourneyPath";
 import AIHub from "@/components/dashboard/AIHub";
@@ -8,7 +9,9 @@ import RightPanel from "@/components/dashboard/RightPanel";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Leaderboard from "@/components/dashboard/Leaderboard";
 import Milestones from "@/components/dashboard/Milestones";
-import { Spark } from "@/types/spark";
+
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,28 +21,47 @@ const FALLBACKS = {
   TIME: 5,
 };
 
-// 🔥 BASE FORMATTER (NO STATUS LOGIC)
-const baseFormatSpark = (s: any): Spark => ({
-  id: s.id,
-  title: s.title,
-  description: s.description ?? "",
-  slug: s.slug,
-  duration: `${s.timeEstimate ?? FALLBACKS.TIME}m`,
-  xp: s.xpReward ?? FALLBACKS.XP,
-  image: s.imageThumbnail ?? FALLBACKS.IMAGE,
-  thumbnail: s.imageThumbnail ?? FALLBACKS.IMAGE,
-  contentStatus: s.status,
-  uiStatus: "locked",
-  isPremium: false,
-  createdAt: s.createdAt ?? new Date(),
-});
+type SparkUIStatus = "locked" | "active" | "completed";
 
-// 🔥 JOURNEY ENGINE (CORE LOGIC)
-function computeJourneyState(
-  sparks: Spark[],
-  progressMap: Map<string, any>
-): Spark[] {
-  let foundActive = false;
+export interface SparkCardVM {
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+
+  duration: string;
+  xp: number;
+
+  image: string;
+  thumbnail: string;
+
+  uiStatus: SparkUIStatus;
+}
+
+type SparkWithFields = Prisma.SparkGetPayload<{}>;
+
+function toSparkCardVM(s: SparkWithFields): SparkCardVM {
+  return {
+    id: s.id,
+    title: s.title,
+    description: s.description ?? "",
+    slug: s.slug,
+
+    duration: `${s.timeEstimate ?? FALLBACKS.TIME}m`,
+    xp: s.xpReward ?? FALLBACKS.XP,
+
+    image: s.imageThumbnail ?? FALLBACKS.IMAGE,
+    thumbnail: s.imageThumbnail ?? FALLBACKS.IMAGE,
+
+    uiStatus: "locked",
+  };
+}
+
+function applyJourneyState(
+  sparks: SparkCardVM[],
+  progressMap: Map<string, { completed?: boolean }>
+): SparkCardVM[] {
+  let activeAssigned = false;
 
   return sparks.map((spark) => {
     const progress = progressMap.get(spark.id);
@@ -48,8 +70,8 @@ function computeJourneyState(
       return { ...spark, uiStatus: "completed" };
     }
 
-    if (!foundActive) {
-      foundActive = true;
+    if (!activeAssigned) {
+      activeAssigned = true;
       return { ...spark, uiStatus: "active" };
     }
 
@@ -57,65 +79,70 @@ function computeJourneyState(
   });
 }
 
-async function getDashboardData(userId: string) {
+async function getDashboardData(userId: string): Promise<{
+  sparks: SparkCardVM[];
+  journeySparks: SparkCardVM[];
+  continueSpark: SparkCardVM | null;
+  todaysWord: Awaited<ReturnType<typeof db.todaysWord.findFirst>>;
+}> {
   try {
     const [sparksRaw, journeyRaw, progressRaw, todaysWord] =
       await Promise.all([
         db.spark.findMany({
-          where: {
-            status: "ACTIVE" as ContentStatus,
-          },
+          where: { status: ContentStatus.ACTIVE },
           orderBy: { createdAt: "asc" },
           take: 12,
         }),
+
         db.journey.findFirst({
-          where: { status: "ACTIVE" as ContentStatus },
+          where: { status: ContentStatus.ACTIVE },
           include: {
             sparks: {
-              where: { status: "ACTIVE" as ContentStatus },
+              where: { status: ContentStatus.ACTIVE },
               orderBy: { order: "asc" },
             },
           },
         }),
-        db.userLessonProgress.findMany({ where: { userId } }),
-        db.todaysWord.findFirst({ orderBy: { displayDate: "desc" } }),
+
+        db.userLessonProgress.findMany({
+          where: { userId },
+        }),
+
+        db.todaysWord.findFirst({
+          orderBy: { displayDate: "desc" },
+        }),
       ]);
 
-    const progressMap = new Map(
-      progressRaw.map((p) => [p.sparkId, p])
+    const progressMap = new Map<string, { completed?: boolean }>(
+      progressRaw.map((p) => [p.sparkId, { completed: p.completed }])
     );
 
-    // 🔹 DAILY SPARKS (UNCHANGED LOGIC)
-    const sparks = sparksRaw.map((s) => {
-      const base = baseFormatSpark(s);
+    const sparks: SparkCardVM[] = sparksRaw.map(toSparkCardVM).map((s) => {
+      const progress = progressMap.get(s.id);
+
       return {
-        ...base,
-        uiStatus: progressMap.get(s.id)?.completed
+        ...s,
+        uiStatus: progress?.completed
           ? "completed"
-          : progressMap.has(s.id)
+          : progress
           ? "active"
           : "locked",
       };
     });
 
-    // 🔥 JOURNEY SPARKS (NEW LOGIC)
-    const journeyBase =
-      journeyRaw?.sparks.map(baseFormatSpark) || [];
+    const journeyBase: SparkCardVM[] =
+      journeyRaw?.sparks?.map(toSparkCardVM) ?? [];
 
-    const journeySparks = computeJourneyState(
+    const journeySparks = applyJourneyState(
       journeyBase,
       progressMap
     );
 
-    // 🔥 CONTINUE LEARNING (SMART SELECTION)
-    const activeSpark = journeySparks.find(
-      (s) => s.uiStatus === "active"
-    );
-
-    const continueSpark =
-      activeSpark ||
-      journeySparks[journeySparks.length - 1] ||
-      sparks[0];
+    const continueSpark: SparkCardVM | null =
+      journeySparks.find((s) => s.uiStatus === "active") ??
+      journeySparks.at(-1) ??
+      sparks[0] ??
+      null;
 
     return {
       sparks,
@@ -124,7 +151,8 @@ async function getDashboardData(userId: string) {
       todaysWord,
     };
   } catch (error) {
-    console.error("Critical Dashboard Error:", error);
+    console.error("Dashboard data error:", error);
+
     return {
       sparks: [],
       journeySparks: [],
@@ -135,25 +163,25 @@ async function getDashboardData(userId: string) {
 }
 
 export default async function DashboardPage() {
-  const userId = "user_debug_123";
+  const session = await getServerSession(authOptions);
 
-  const {
-    sparks,
-    journeySparks,
-    continueSpark,
-    todaysWord,
-  } = await getDashboardData(userId);
+  if (!session?.user?.id) return null;
+
+  const { sparks, journeySparks, continueSpark, todaysWord } =
+    await getDashboardData(session.user.id);
 
   return (
     <DashboardLayout>
       <div className="space-y-12 animate-in fade-in duration-700">
-        {/* CTA */}
+
+        {/* ✅ CLIENT WRAPPER HANDLES INTERACTION */}
         {continueSpark && (
-          <ContinueLearningCard spark={continueSpark} />
+          <ContinueLearningCardClient spark={continueSpark} />
         )}
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
           <div className="xl:col-span-8 space-y-12">
+
             <section>
               <h2 className="text-xl font-black text-[#162B6E] mb-6 flex items-center gap-2">
                 Your Daily Sparks

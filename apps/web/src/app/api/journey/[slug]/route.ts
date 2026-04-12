@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { computeSparkStatuses } from "@/lib/spark-status";
+import { buildSparkJourneyState } from "@/lib/spark-engine";
+import { SparkDTO } from "@/types/spark.types";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-
-// ⚠️ TEMP: replace with real auth later
-const MOCK_USER_ID = "test-user-id";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   try {
+    // 🔐 AUTH
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
     const slug = params.slug;
 
-    // 1. Get journey with sparks
+    // 1. FETCH JOURNEY + SPARKS
     const journey = await db.journey.findUnique({
       where: { slug },
       include: {
@@ -36,79 +47,104 @@ export async function GET(
       );
     }
 
-    // 2. Get user progress
+    const sparks = journey.sparks ?? [];
+    const sparkIds = sparks.map((s) => s.id);
+
+    // 2. USER PROGRESS (lean query)
     const progress = await db.userLessonProgress.findMany({
       where: {
-        userId: MOCK_USER_ID,
-        sparkId: {
-          in: journey.sparks.map((s) => s.id),
-        },
+        userId,
+        sparkId: { in: sparkIds },
+      },
+      select: {
+        sparkId: true,
+        completed: true,
       },
     });
 
-    const completedIds = progress
-      .filter((p) => p.completed)
-      .map((p) => p.sparkId);
-
-    // 3. Determine current active spark
-    const firstIncomplete = journey.sparks.find(
-      (s) => !completedIds.includes(s.id)
+    const completedIds = new Set(
+      progress.filter((p) => p.completed).map((p) => p.sparkId)
     );
 
-    const currentSparkId = firstIncomplete?.id;
+    // 3. CURRENT ACTIVE SPARK
+    const firstIncomplete = sparks.find(
+      (s) => !completedIds.has(s.id)
+    );
 
-    // 4. 🔥 FIX: NORMALIZE PRISMA NULLS → UNDEFINED
-    const normalizedSparks = journey.sparks.map((spark) => ({
-      ...spark,
+    // ✅ FIX: engine expects undefined, NOT null
+    const currentSparkId = firstIncomplete?.id ?? undefined;
+
+    // 4. DTO NORMALIZATION (STRICT CONTRACT)
+    const normalizedSparks: SparkDTO[] = sparks.map((spark) => ({
+      id: spark.id,
+      journeyId: spark.journeyId ?? null,
+
+      order: spark.order,
+
+      title: spark.title,
+      slug: spark.slug,
       description: spark.description ?? undefined,
+
+      category: spark.category,
+      difficulty: spark.difficulty,
+
+      xpReward: spark.xpReward,
+
+      imageThumbnail: spark.imageThumbnail ?? undefined,
+      icon: spark.icon ?? undefined,
+
+      // theme color fix (engine-safe naming)
+      color: spark.themeColor ?? undefined,
+
+      isPublished: spark.isPublished,
+      timeEstimate: spark.timeEstimate ?? undefined,
+
+      status: spark.status,
+
+      createdAt: spark.createdAt,
+      updatedAt: spark.updatedAt,
+
+      contentBlocks: spark.contentBlocks ?? [],
+      exercises: spark.exercises ?? [],
+      vocabulary: spark.vocabulary ?? [],
     }));
 
-    // 5. ENRICH SPARKS WITH UI STATE (ENGINE CORE)
-    const enrichedSparks = computeSparkStatuses(
-      normalizedSparks,
-      completedIds,
-      currentSparkId
-    );
+    // 5. ENGINE (single source of truth)
+    const engineResult = buildSparkJourneyState({
+      sparks: normalizedSparks,
+      completedSparkIds: Array.from(completedIds),
+      currentSparkId,
+    });
 
-    // 6. Calculate journey stats
-    const total = journey.sparks.length;
-    const completed = completedIds.length;
-    const progressPercent =
-      total === 0 ? 0 : Math.round((completed / total) * 100);
+    const { sparks: processedSparks, nextSpark, stats } = engineResult;
 
-    // 7. Next spark
-    const nextSpark =
-      enrichedSparks.find((s) => s.uiStatus === "active") || null;
+    // 6. JOURNEY DTO (clean boundary)
+    const normalizedJourney = {
+      id: journey.id,
+      slug: journey.slug,
+      title: journey.title,
+      description: journey.description ?? undefined,
+      color: journey.color ?? undefined,
+      icon: journey.icon ?? undefined,
+    };
 
     return NextResponse.json({
       success: true,
-
-      journey: {
-        id: journey.id,
-        slug: journey.slug,
-        title: journey.title,
-        description: journey.description,
-        color: journey.color,
-        icon: journey.icon,
-      },
-
-      stats: {
-        totalSparks: total,
-        completedSparks: completed,
-        progressPercent,
-      },
-
+      journey: normalizedJourney,
+      stats,
       nextSpark,
-
-      sparks: enrichedSparks,
+      sparks: processedSparks,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[JOURNEY_ENGINE_ERROR]", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to load journey",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to load journey",
       },
       { status: 500 }
     );

@@ -208,7 +208,7 @@ export default function HeroSection() {
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
                 transition={{ delay: 1.2 }}
-                className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[110%] h-[40%] z-20 pointer-events-none"
+                className="absolute -bottom-8 left-1 -translate-x-1/2 w-[110%] h-[40%] z-20 pointer-events-none"
               >
                 <Image 
                   src="https://res.cloudinary.com/dgotesgcy/image/upload/sqwopftine1ifaykvpca.svg" 
