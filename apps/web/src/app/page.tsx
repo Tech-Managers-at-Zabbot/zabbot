@@ -3,7 +3,6 @@
 import React from "react";
 import HeroSection from "@/components/landing/HeroSection";
 import FeaturesGrid from "@/components/landing/FeaturesGrid";
-import PartnerTicker from "@/components/landing/PartnerTicker";
 import ComparisonSection from "@/components/landing/ComparisonSection";
 import DashboardPeek from "@/components/landing/DashboardPeek";
 import TeamSection from "@/components/landing/TeamSection";
@@ -43,11 +42,6 @@ export default function LandingPage() {
           {/* ⚡ FEATURES */}
           <section id="features" className="px-4">
             <FeaturesGrid />
-          </section>
-
-          {/* 🌍 SOCIAL PROOF */}
-          <section className="px-4">
-            <PartnerTicker />
           </section>
 
           {/* 💰 PRICING */}

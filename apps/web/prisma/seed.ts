@@ -42,8 +42,8 @@ async function main() {
       where: { slug: "greetings-1" },
       update: {},
       create: {
-        title: "Greetings 1",
-        slug: "greetings-1",
+        title: "Say Hello",
+        slug: "say-hello",
         description: "Basic Yoruba greetings",
         order: 1,
         journeyId: basicsJourney.id,
@@ -54,7 +54,7 @@ async function main() {
         status: "ACTIVE",
 
         imageThumbnail:
-          "/placeholders/zabbot-spark.png",
+          "https://res.cloudinary.com/dgotesgcy/image/upload/hgroc6fdzgxbjynfy0gk.jpg",
 
         bgColor: "#24A5EE",
         timeEstimate: 5,
@@ -77,7 +77,7 @@ async function main() {
         status: "ACTIVE",
 
         imageThumbnail:
-          "/lessons/introductions.png",
+          "/assets/placeholders/zabbot-spark.png",
 
         bgColor: "#1E90FF",
         timeEstimate: 6,

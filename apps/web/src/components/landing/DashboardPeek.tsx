@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Lock, Zap, Flame, Mic, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPeek() {
   return (
@@ -45,9 +46,11 @@ export default function DashboardPeek() {
                   </p>
                 </div>
 
-                <button className="bg-[#24A5EE] text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-[#1d8cd1] transition-all flex items-center gap-2 mx-auto">
-                  Start Free Trial <Zap size={16} />
-                </button>
+                <Link href="/login">
+                  <button className="bg-[#24A5EE] text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-[#1d8cd1] transition-all flex items-center gap-2 mx-auto">
+                    Start Free Trial <Zap size={16} />
+                  </button>
+                </Link>
 
               </GlassCard>
             </motion.div>
@@ -61,10 +64,10 @@ export default function DashboardPeek() {
             className="relative overflow-hidden rounded-[32px]"
           >
 
-            {/* ✨ SOFT GLASS OVERLAY (instead of heavy fade) */}
+            {/* ✨ SOFT GLASS OVERLAY */}
             <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px] z-20" />
 
-            {/* 🎯 CONTENT (MORE VISIBLE NOW) */}
+            {/* 🎯 CONTENT */}
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}

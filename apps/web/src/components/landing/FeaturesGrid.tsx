@@ -2,15 +2,16 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  BotMessageSquare, 
-  Mic, 
-  BookOpenText, 
-  UsersRound, 
-  ArrowUpRight, 
-  Sparkles 
+import {
+  BotMessageSquare,
+  Mic,
+  BookOpenText,
+  UsersRound,
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const features = [
   {
@@ -50,9 +51,9 @@ const features = [
 export default function FeaturesGrid() {
   return (
     <section className="py-20 px-4 relative overflow-hidden">
-      <div className="max-w-6xl mx-auto text-center"> {/* Centered everything inside */}
+      <div className="max-w-6xl mx-auto text-center">
 
-        {/* HEADER (MINIMAL) */}
+        {/* HEADER */}
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 text-[#24A5EE] text-xs font-bold uppercase tracking-widest mb-3">
             <Sparkles size={14} />
@@ -64,29 +65,54 @@ export default function FeaturesGrid() {
           </h2>
         </div>
 
-        {/* MOBILE SCROLL */}
-        <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 overflow-x-auto md:overflow-visible pb-4 scrollbar-hide">
-          {features.map((feature, index) => (
-            <FeatureCard key={index} {...feature} />
-          ))}
+        {/* 🌟 BORDERED MODULE CONTAINER */}
+        <div className="relative rounded-[34px] border border-[#24A5EE]/20 bg-white/40 backdrop-blur-xl shadow-[0_20px_60px_rgba(22,43,110,0.08)] px-4 md:px-6 py-6 md:py-10">
+
+          {/* soft glow ring */}
+          <div className="absolute inset-0 rounded-[34px] pointer-events-none ring-1 ring-[#24A5EE]/10" />
+
+          {/* GRID */}
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 overflow-x-auto md:overflow-visible pb-2 scrollbar-hide relative z-10">
+            {features.map((feature, index) => (
+              <FeatureCard key={index} {...feature} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay }: any) {
+/* =========================
+   FEATURE CARD
+========================= */
+function FeatureCard({
+  icon: Icon,
+  title,
+  tag,
+  mascot,
+  gradient,
+  delay,
+}: any) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push("/dashboard");
+  };
+
   return (
     <motion.div
+      onClick={handleClick}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
       viewport={{ once: true }}
       whileHover={{ y: -8 }}
-      className="min-w-[260px] md:min-w-0 group"
+      className="min-w-[260px] md:min-w-0 group cursor-pointer"
     >
-      <div className={`relative h-[340px] rounded-[28px] overflow-hidden bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between shadow-xl`}>
-
+      <div
+        className={`relative h-[340px] rounded-[28px] overflow-hidden bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between shadow-xl`}
+      >
         {/* BACKGROUND BLOBS */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
@@ -122,32 +148,27 @@ function FeatureCard({ icon: Icon, title, tag, mascot, gradient, delay }: any) {
             {title}
           </h3>
 
-          {/* NEW CTA SECTION */}
-          <a href="#" className="block group/btn">
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
-              className="relative overflow-hidden w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer"
+          {/* CTA */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
+            className="relative overflow-hidden w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer"
+          >
+            {/* SHINE EFFECT */}
+            <span className="absolute inset-0 overflow-hidden rounded-xl">
+              <span className="absolute -left-1/2 top-0 h-full w-1/2 bg-white/30 blur-md rotate-12 translate-x-0 group-hover:translate-x-[200%] transition-transform duration-700" />
+            </span>
+
+            <span className="relative z-10">Open</span>
+
+            <motion.span
+              className="relative z-10 flex items-center"
+              whileHover={{ x: 3, y: -3 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              {/* SHINE SWEEP */}
-              <span className="absolute inset-0 overflow-hidden rounded-xl">
-                <span className="absolute -left-1/2 top-0 h-full w-1/2 bg-white/30 blur-md rotate-12 translate-x-0 group-hover/btn:translate-x-[200%] transition-transform duration-700" />
-              </span>
-
-              {/* TEXT */}
-              <span className="relative z-10">Open</span>
-
-              {/* ICON ANIMATION */}
-              <motion.span
-                className="relative z-10 flex items-center"
-                initial={{ x: 0, y: 0 }}
-                whileHover={{ x: 3, y: -3 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <ArrowUpRight size={14} />
-              </motion.span>
-            </motion.div>
-          </a>
+              <ArrowUpRight size={14} />
+            </motion.span>
+          </motion.div>
         </div>
 
         {/* HOVER GLOW */}
