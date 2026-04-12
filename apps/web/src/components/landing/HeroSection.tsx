@@ -141,7 +141,7 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-slate-600 text-lg md:text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
-             Master the dialects of your ancestors through <span className="text-[#162B6E] font-semibold">AI-powered cultural immersion.</span>
+             through <span className="text-[#162B6E] font-semibold">AI-powered cultural immersion.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
