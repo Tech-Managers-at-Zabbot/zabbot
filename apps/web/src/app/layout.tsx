@@ -1,12 +1,14 @@
+// /app/layout.tsx
 import type { Metadata } from "next";
 import { Inter, Lexend, Lexend_Exa } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
 import GlobalHeader from "@/components/layout/GlobalHeader";
+import { AuthProvider } from "@/components/auth/AuthProvider"; // ✅ ADD THIS
 
 // =========================
-// FONTS (FIXED & CONSISTENT)
+// FONTS
 // =========================
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +35,6 @@ export const metadata: Metadata = {
   title: "Zabbot | The Spark that Powers Language Connection",
   description:
     "Learn your heritage language through AI-powered cultural immersion",
-
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -56,15 +57,24 @@ export default function RootLayout({
       className={`${inter.variable} ${lexend.variable} ${lexendExa.variable} h-full`}
     >
       <body className="antialiased min-h-screen flex flex-col font-sans bg-background text-foreground">
+        
         <Providers>
-          <GlobalHeader />
 
-          <main className="flex-1 pt-24 relative">
-            {children}
-          </main>
+          {/* 🔥 AUTH PROVIDER WRAPS APP SHELL */}
+          <AuthProvider>
 
-          <Toaster position="top-center" richColors closeButton />
+            <GlobalHeader />
+
+            <main className="flex-1 pt-24 relative">
+              {children}
+            </main>
+
+            <Toaster position="top-center" richColors closeButton />
+
+          </AuthProvider>
+
         </Providers>
+
       </body>
     </html>
   );

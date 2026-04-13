@@ -2,12 +2,15 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-
 import { prisma } from "@/lib/prisma";
 
-// ✉️ EMAIL SYSTEM
 import { sendEmail } from "@/lib/email";
 import { welcomeEmailTemplate } from "@/lib/emails/welcome-email";
+
+/**
+ * 🔐 Centralized email normalization (IMPORTANT BEST PRACTICE)
+ */
+const normalizeEmail = (email: string) => email.toLowerCase().trim();
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -37,17 +40,17 @@ export const authOptions: NextAuthOptions = {
 
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password");
+          return null; // ✅ BEST PRACTICE (no throw)
         }
 
-        const email = credentials.email.toLowerCase().trim();
+        const email = normalizeEmail(credentials.email);
 
         const user = await prisma.user.findUnique({
           where: { email },
         });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid login credentials");
+        if (!user?.password) {
+          return null;
         }
 
         const isValid = await bcrypt.compare(
@@ -56,7 +59,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isValid) {
-          throw new Error("Invalid login credentials");
+          return null;
         }
 
         return {
@@ -68,16 +71,19 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
 
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+ pages: {
+  signIn: "/login",
+  error: "/auth/error",
+},
 
   callbacks: {
+    /**
+     * 🔐 SAFE redirect (prevents open redirect abuse)
+     */
     async redirect({ url, baseUrl }) {
-      if (url.startsWith(baseUrl)) return url;
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      return baseUrl;
+      if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/dashboard`;
     },
 
     async jwt({ token, user }) {
@@ -90,15 +96,9 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      // 🔐 SAFE GUARD (prevents TS crash + runtime crash)
       if (session.user) {
-        session.user = {
-          ...session.user,
-          id: token.id as string,
-          email: token.email as string,
-        } as typeof session.user & {
-          id: string;
-        };
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
       }
 
       return session;

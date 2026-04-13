@@ -13,10 +13,12 @@ import {
   User,
   LogOut,
   Star,
+  LogIn,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/components/auth/AuthProvider"; // ✅ NEW
 
 /* STREAK */
 function StreakIndicator({ currentStreak }: { currentStreak: number }) {
@@ -36,6 +38,8 @@ export default function GlobalHeader() {
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated";
   const displayName = session?.user?.name || "User";
+
+  const { setView } = useAuth(); // ✅ NEW
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" });
@@ -99,10 +103,10 @@ export default function GlobalHeader() {
             ${scrolled ? "bg-white/70 shadow-xl" : "bg-white/40"}
           `}
         >
-          {/* EXTRA GLASS LAYER */}
+          {/* GLASS LAYER */}
           <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent pointer-events-none rounded-[22px]" />
 
-          {/* LOGO (WIDER) */}
+          {/* LOGO */}
           <Link
             href="/"
             className="relative w-28 md:w-32 h-12 md:h-14 hover:scale-105 transition-all flex items-center z-10"
@@ -118,7 +122,7 @@ export default function GlobalHeader() {
 
           {/* ACTIONS */}
           <div className="relative flex items-center gap-2.5 z-10" ref={menuRef}>
-            {/* CTA */}
+
             {isSignedIn ? (
               <Link href="/dashboard">
                 <motion.button
@@ -130,37 +134,43 @@ export default function GlobalHeader() {
                 </motion.button>
               </Link>
             ) : (
-              <Link href="/login">
+              <div className="flex items-center gap-2">
+
                 <motion.button
-  whileHover={{ y: -1 }}
-  whileTap={{ scale: 0.97 }}
-  className="
-    px-4 py-2
-    rounded-xl
-    font-black text-[10px]
-    uppercase tracking-wider
-    flex items-center gap-2
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setView("login")}
+                  className="
+                    px-4 py-2 rounded-xl font-black text-[10px]
+                    uppercase tracking-wider flex items-center gap-2
+                    text-[#162B6E] bg-white/50 backdrop-blur-xl
+                    border border-white/60
+                    hover:bg-white/70 transition-all duration-300
+                  "
+                >
+                  Login <LogIn size={12} />
+                </motion.button>
 
-    text-[#162B6E]
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setView("signup")}
+                  className="
+                    px-4 py-2 rounded-xl font-black text-[10px]
+                    uppercase tracking-wider flex items-center gap-2
+                    text-[#162B6E] bg-white/40 backdrop-blur-xl
+                    border border-orange-300/60
+                    shadow-[0_8px_30px_rgba(22,43,110,0.08)]
+                    hover:bg-white/60 hover:border-orange-400/80
+                    hover:shadow-[0_10px_40px_rgba(22,43,110,0.12),0_0_25px_rgba(251,146,60,0.25)]
+                    hover:-translate-y-[1px]
+                    transition-all duration-300
+                  "
+                >
+                  Start Free Trial <Zap size={12} />
+                </motion.button>
 
-    bg-white/40
-    backdrop-blur-xl
-
-    border border-orange-300/60
-
-    shadow-[0_8px_30px_rgba(22,43,110,0.08)]
-
-    hover:bg-white/60
-    hover:border-orange-400/80
-    hover:shadow-[0_10px_40px_rgba(22,43,110,0.12),0_0_25px_rgba(251,146,60,0.25)]
-    hover:-translate-y-[1px]
-
-    transition-all duration-300
-  "
->
-  Start Free Trial <Zap size={12} />
-</motion.button>
-              </Link>
+              </div>
             )}
 
             {/* GAMIFICATION */}
@@ -234,10 +244,29 @@ export default function GlobalHeader() {
                     </div>
                   </div>
 
+                  {/* ===================== */}
+                  {/* UPDATED DROPDOWN NAV */}
+                  {/* ===================== */}
                   <nav className="flex flex-col gap-1">
                     <DropdownLink icon={<Home size={16} />} label="Home" href="/" />
-                    <DropdownLink icon={<MessageCircle size={16} />} label="AI Tutor" href="/chat" />
-                    <DropdownLink icon={<Library size={16} />} label="Curriculum" href="/library" />
+
+                    {/* LOCKED: AI Tutor */}
+                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
+                      <span className="text-slate-300">🔒</span>
+                      AI Tutor
+                    </div>
+
+                    {/* LOCKED: Curriculum */}
+                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
+                      <span className="text-slate-300">🔒</span>
+                      Curriculum
+                    </div>
+
+                    {/* LOCKED: Get A Coach */}
+                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
+                      <span className="text-slate-300">🔒</span>
+                      Get A Coach
+                    </div>
 
                     <div className="h-px bg-slate-100 my-2 mx-3" />
 
@@ -253,12 +282,22 @@ export default function GlobalHeader() {
                         </button>
                       </>
                     ) : (
-                      <DropdownLink icon={<User size={16} />} label="Sign In" href="/login" />
+                      <button
+                        onClick={() => {
+                          setView("login");
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-xs hover:bg-blue-50"
+                      >
+                        <User size={16} />
+                        Sign In
+                      </button>
                     )}
                   </nav>
                 </motion.div>
               )}
             </AnimatePresence>
+
           </div>
         </motion.div>
       </header>

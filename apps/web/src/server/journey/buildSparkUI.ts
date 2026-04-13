@@ -7,41 +7,59 @@ export type SparkWithUI = Spark & {
 };
 
 export function buildSparkUI(
-  sparks: Spark[],
-  progress: UserLessonProgress[]
+  sparks: Spark[] = [],
+  progress: UserLessonProgress[] = []
 ): SparkWithUI[] {
-  const completedSet = new Set(
-    progress.filter((p) => p.completed).map((p) => p.sparkId)
+  // 🛡️ Safety: handle empty input early
+  if (!Array.isArray(sparks) || sparks.length === 0) {
+    return [];
+  }
+
+  // ✅ Build completed lookup set
+  const completedSet = new Set<string>(
+    progress
+      .filter((p) => p.completed === true && p.sparkId)
+      .map((p) => p.sparkId)
   );
 
-  const completedCount = completedSet.size;
+  // ✅ Sort immutably and deterministically
+  const sortedSparks = [...sparks].sort((a, b) => {
+    if (a.order === b.order) {
+      return a.id.localeCompare(b.id); // fallback for stability
+    }
+    return a.order - b.order;
+  });
 
   let activeAssigned = false;
 
-  return sparks
-    .sort((a, b) => a.order - b.order)
-    .map((spark) => {
-      // 1. completed
-      if (completedSet.has(spark.id)) {
-        return {
-          ...spark,
-          uiStatus: "completed",
-        };
-      }
+  const result: SparkWithUI[] = [];
 
-      // 2. first incomplete becomes active
-      if (!activeAssigned) {
-        activeAssigned = true;
-        return {
-          ...spark,
-          uiStatus: "active",
-        };
-      }
-
-      // 3. rest locked
-      return {
+  for (const spark of sortedSparks) {
+    // ✅ Completed takes highest priority
+    if (completedSet.has(spark.id)) {
+      result.push({
         ...spark,
-        uiStatus: "locked",
-      };
+        uiStatus: "completed",
+      });
+      continue;
+    }
+
+    // ✅ First incomplete becomes active
+    if (!activeAssigned) {
+      result.push({
+        ...spark,
+        uiStatus: "active",
+      });
+      activeAssigned = true;
+      continue;
+    }
+
+    // 🔒 Remaining are locked
+    result.push({
+      ...spark,
+      uiStatus: "locked",
     });
+  }
+
+  return result;
 }

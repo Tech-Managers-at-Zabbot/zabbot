@@ -2,46 +2,82 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildSparkUI } from "@/server/journey/buildSparkUI";
 
+type RouteContext = {
+  params: {
+    journeyId?: string;
+  };
+};
+
 export async function GET(
   req: NextRequest,
-  { params }: { params: { journeyId: string } }
+  context: RouteContext
 ) {
   try {
-    const userId = "demo-user-id"; // replace with auth later
+    const journeyId = context.params?.journeyId;
 
+    if (!journeyId) {
+      return NextResponse.json(
+        { success: false, error: "Journey ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // ⚠️ Replace with real session later
+    const userId = "demo-user-id";
+
+    // 📦 Fetch journey
     const journey = await prisma.journey.findUnique({
-      where: { id: params.journeyId },
+      where: { id: journeyId },
       include: {
         sparks: true,
       },
     });
 
     if (!journey) {
-      return NextResponse.json({ error: "Journey not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Journey not found" },
+        { status: 404 }
+      );
     }
 
+    // 📊 Fetch user progress
     const progress = await prisma.userLessonProgress.findMany({
       where: {
         userId,
         spark: {
-          journeyId: params.journeyId,
+          journeyId,
+        },
+      },
+      include: {
+        spark: {
+          select: { id: true },
         },
       },
     });
 
+    // 🎯 Build UI state
     const sparksWithUI = buildSparkUI(journey.sparks, progress);
 
     return NextResponse.json({
-      journey: {
-        id: journey.id,
-        title: journey.title,
-        description: journey.description,
+      success: true,
+      data: {
+        journey: {
+          id: journey.id,
+          title: journey.title,
+          description: journey.description,
+        },
+        sparks: sparksWithUI,
       },
-      sparks: sparksWithUI,
     });
-  } catch (err: any) {
+
+  } catch (error) {
+    console.error("Journey fetch error:", error);
+
     return NextResponse.json(
-      { error: err.message || "Failed to load journey" },
+      {
+        success: false,
+        error: "Failed to load journey",
+      },
       { status: 500 }
     );
   }
