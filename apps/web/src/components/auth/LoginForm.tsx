@@ -6,7 +6,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { FcGoogle } from "react-icons/fc";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -18,6 +18,9 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ NEW STATE
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -59,10 +62,10 @@ export default function LoginForm() {
   return (
     <div className="relative pt-6">
 
-      {/* 🧊 FORM CONTAINER */}
+      {/* FORM CONTAINER */}
       <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 overflow-hidden">
 
-        {/* 🦜 MASCOT (NOW CONTAINED) */}
+        {/* MASCOT */}
         <div className="flex justify-center mb-4">
           <div className="w-14 h-14 rounded-full bg-white/80 shadow-md border border-white/60 flex items-center justify-center overflow-hidden">
             <Image
@@ -76,7 +79,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* CLOSE BUTTON */}
+        {/* CLOSE */}
         <button
           onClick={() => setView(null)}
           className="absolute top-2 right-2 p-2 rounded-full bg-white/60 hover:bg-white/80 transition"
@@ -89,6 +92,7 @@ export default function LoginForm() {
           Welcome back
         </h2>
 
+        {/* ERROR */}
         {error && (
           <p className="text-red-500 text-sm mb-2 text-center">
             {error}
@@ -107,14 +111,29 @@ export default function LoginForm() {
             className="w-full p-3 rounded-xl bg-white/70 border outline-none focus:ring-2 focus:ring-[#24A5EE]"
           />
 
-          <input
-            type="password"
-            disabled={loading || googleLoading}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/70 border outline-none focus:ring-2 focus:ring-[#24A5EE]"
-          />
+          {/* PASSWORD FIELD WITH TOGGLE */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              disabled={loading || googleLoading}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 pr-10 rounded-xl bg-white/70 border outline-none focus:ring-2 focus:ring-[#24A5EE]"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black"
+            >
+              {showPassword ? (
+                <EyeOff size={18} />
+              ) : (
+                <Eye size={18} />
+              )}
+            </button>
+          </div>
 
           <button
             type="submit"

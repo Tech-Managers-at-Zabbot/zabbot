@@ -9,47 +9,93 @@ datasource db {
 }
 
 model User {
-  id              String                   @id @default(cuid())
-  name            String?
-  email           String                   @unique
-  emailVerified   DateTime?
-  image           String?
-  avatarUrl       String?
-  role            UserRole                 @default(USER)
-  status          UserStatus               @default(ACTIVE)
-  xp              Int                      @default(0)
-  hearts          Int                      @default(5)
-  currentStreak   Int                      @default(0)
-  longestStreak   Int                      @default(0)
-  streakFreezes   Int                      @default(0)
-  isStreakFrozen  Boolean                  @default(false)
-  lastStreakDate  DateTime?
-  bestParaScore   Int                      @default(0)
-  paraRankTitle   String?
-  lastActive      DateTime?
-  themePreference String                   @default("light")
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  deletedAt       DateTime?
-  isOnboarded     Boolean                  @default(false)
-  password        String?
-  conversations   AIConversationLog[]
-  aiSessions      AIConversationSession[]
-  accounts        Account[]
-  activityLogs    ActivityLog[]
-  attempts        Attempt[]
-  auditLogs       AuditLog[]               @relation("Initiator")
-  flashcards      Flashcard[]
-  sessions        Session[]
-  sparkSessions   SparkSession[]
-  subscription    Subscription?
-  achievements    UserAchievement[]
-  journeyProgress UserJourneyProgress[]
-  progress        UserLessonProgress[]
-  vocabulary      UserVocabularyProgress[]
-  xpTransactions  XpTransaction[]
+  // ======================
+  // CORE IDENTITY
+  // ======================
+  id            String   @id @default(cuid())
+  name          String?
+  email         String   @unique
+  emailVerified DateTime?
 
+  // Auth (credentials + OAuth support)
+  password      String?
+  image         String?
+
+  // ======================
+  // USER STATUS & CONTROL
+  // ======================
+  role          UserRole   @default(USER)
+  status        UserStatus @default(ACTIVE)
+
+  isOnboarded   Boolean    @default(false)
+  isDeleted     Boolean    @default(false)
+  deletedAt     DateTime?
+
+  lastActive    DateTime?
+
+  // ======================
+  // GAMIFICATION CORE
+  // ======================
+  xp             Int @default(0)
+  hearts         Int @default(5)
+
+  currentStreak  Int @default(0)
+  longestStreak  Int @default(0)
+
+  streakFreezes  Int @default(0)
+  isStreakFrozen Boolean @default(false)
+
+  lastStreakDate DateTime?
+
+  // ======================
+  // PERFORMANCE / LEARNING
+  // ======================
+  bestParaScore  Int?
+  paraRankTitle  String?
+
+  // ======================
+  // PREFERENCES
+  // ======================
+  themePreference String @default("light")
+
+  // ======================
+  // RELATIONSHIPS
+  // ======================
+  conversations  AIConversationLog[]
+  aiSessions     AIConversationSession[]
+  accounts       Account[]
+  sessions       Session[]
+
+  activityLogs   ActivityLog[]
+  attempts       Attempt[]
+  auditLogs      AuditLog[] @relation("Initiator")
+
+  flashcards     Flashcard[]
+  sparkSessions  SparkSession[]
+
+  subscription   Subscription?
+
+  achievements   UserAchievement[]
+  journeyProgress UserJourneyProgress[]
+  progress       UserLessonProgress[]
+  vocabulary     UserVocabularyProgress[]
+
+  xpTransactions XpTransaction[]
+
+  // ======================
+  // META
+  // ======================
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ======================
+  // INDEXES (IMPORTANT)
+  // ======================
   @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([lastActive])
+  @@index([currentStreak])
 }
 
 model Account {

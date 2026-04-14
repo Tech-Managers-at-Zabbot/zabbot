@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Linkedin } from "lucide-react";
 import Image from "next/image";
+import { useLanguage } from "@/i18n/language-context";
 
 const team = [
   {
@@ -37,6 +38,8 @@ const team = [
 ];
 
 export default function TeamSection() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-14 md:py-16 px-4 relative overflow-hidden">
       <div className="max-w-6xl mx-auto">
@@ -44,10 +47,11 @@ export default function TeamSection() {
         {/* HEADER */}
         <div className="text-center mb-10">
           <p className="text-[#24A5EE] text-[10px] font-black uppercase tracking-[0.2em]">
-            The Team
+            {t("team.header")}
           </p>
+
           <h2 className="text-3xl md:text-5xl font-extrabold text-[#162B6E] mt-1">
-            Meet the <span className="text-[#24A5EE]">Builders</span>
+            {t("team.title")} <span className="text-[#24A5EE]"></span>
           </h2>
         </div>
 
@@ -67,7 +71,6 @@ export default function TeamSection() {
               {/* IMAGE CARD */}
               <div className="relative aspect-[4/5] rounded-[22px] overflow-hidden bg-black transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-blue-500/10">
 
-                {/* IMAGE */}
                 <motion.div
                   className="absolute inset-0"
                   whileHover={{ scale: 1.06 }}
@@ -87,7 +90,6 @@ export default function TeamSection() {
                   />
                 </motion.div>
 
-                {/* LINKEDIN ICON */}
                 <motion.a
                   href={member.linkedin}
                   whileHover={{ scale: 1.15 }}
@@ -100,33 +102,18 @@ export default function TeamSection() {
                   <Linkedin size={14} />
                 </motion.a>
 
-                {/* GRADIENT */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#162B6E]/85 via-[#162B6E]/30 to-transparent" />
 
-                {/* NAME + ROLE */}
                 <div className="absolute bottom-3 left-3 right-3 z-10">
-
-                  <h3 className="
-                    text-white font-extrabold 
-                    text-sm md:text-base 
-                    leading-tight tracking-tight
-                    drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]
-                  ">
+                  <h3 className="text-white font-extrabold text-sm md:text-base leading-tight tracking-tight">
                     {member.name}
                   </h3>
 
-                  <p className="
-                    text-[10px] md:text-xs 
-                    uppercase tracking-widest font-bold 
-                    text-white/85 mt-0.5
-                    drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]
-                  ">
+                  <p className="text-[10px] md:text-xs uppercase tracking-widest font-bold text-white/85 mt-0.5">
                     {member.role}
                   </p>
-
                 </div>
 
-                {/* HOVER PANEL */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
@@ -137,7 +124,6 @@ export default function TeamSection() {
                   </p>
                 </motion.div>
 
-                {/* GLOW */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-[#24A5EE]/10" />
               </div>
             </motion.div>

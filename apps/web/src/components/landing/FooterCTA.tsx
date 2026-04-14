@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useLanguage } from "@/i18n/language-context";
 
 interface SocialLinkProps {
   icon: React.ComponentType<LucideProps>;
@@ -22,6 +23,7 @@ interface SocialLinkProps {
 export default function FooterCTA() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   const handleSubscribe = async () => {
     if (!email) return;
@@ -85,9 +87,9 @@ export default function FooterCTA() {
 
               {/* HEADLINE */}
               <h2 className="text-3xl md:text-6xl font-black text-[#162B6E] leading-[1.1] tracking-tight italic">
-                Stay Connected. <br />
+                {t("footer.stayConnected")} <br />
                 <span className="text-[#24A5EE] not-italic">
-                  Stay Cultural.
+                  {t("footer.stayCultural")}
                 </span>
               </h2>
 
@@ -96,7 +98,7 @@ export default function FooterCTA() {
                 <div className="flex items-center bg-white border border-white/60 rounded-2xl overflow-hidden shadow-md">
                   <input
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t("footer.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-4 outline-none text-sm"
@@ -113,14 +115,14 @@ export default function FooterCTA() {
 
                 {/* SUBTITLE */}
                 <p className="text-xs text-slate-500 font-medium">
-                  Learnings, riddles, cultural stories, prizes and updates.
+                  {t("footer.subtitle")}
                 </p>
               </div>
 
               {/* TRUST */}
               <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
                 <ShieldCheck size={16} className="text-[#16A34A]" />
-                <span>No spam. Just culture.</span>
+                <span>{t("footer.trust")}</span>
               </div>
             </div>
           </GlassCard>
@@ -131,10 +133,10 @@ export default function FooterCTA() {
 
           {/* Legal Links */}
           <div className="flex gap-6 text-xs font-bold text-slate-500 uppercase tracking-widest">
-            <Link href="#" className="hover:text-[#24A5EE]">About</Link>
-            <Link href="#" className="hover:text-[#24A5EE]">Contact</Link>
-            <Link href="#" className="hover:text-[#24A5EE]">Privacy</Link>
-            <Link href="#" className="hover:text-[#24A5EE]">Terms</Link>
+            <Link href="#" className="hover:text-[#24A5EE]">{t("footer.about")}</Link>
+            <Link href="#" className="hover:text-[#24A5EE]">{t("footer.contact")}</Link>
+            <Link href="#" className="hover:text-[#24A5EE]">{t("footer.privacy")}</Link>
+            <Link href="#" className="hover:text-[#24A5EE]">{t("footer.terms")}</Link>
           </div>
 
           {/* Socials */}
@@ -159,7 +161,7 @@ export default function FooterCTA() {
 
           {/* Legal */}
           <p className="text-slate-400 text-[9px] uppercase tracking-[0.4em] font-black text-center opacity-60">
-            © 2026 Zabbot • Designed for the global diaspora
+            © 2026 Zabbot • {t("footer.legal")}
           </p>
         </div>
 

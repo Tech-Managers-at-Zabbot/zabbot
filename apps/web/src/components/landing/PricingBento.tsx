@@ -1,43 +1,47 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Check, 
-  Sparkles, 
-  Zap, 
-  Infinity as InfinityIcon, // FIX: Aliased to avoid collision with global Infinity
-  Crown 
+import { motion } from "framer-motion";
+import {
+  Check,
+  Sparkles,
+  Zap,
+  Infinity as InfinityIcon,
+  Crown,
 } from "lucide-react";
+import { useLanguage } from "@/i18n/language-context";
 
 const plans = [
   {
-    name: "Explorer",
+    key: "explorer",
     price: "$9.99",
     period: "/mo",
-    features: ["7-Day Free Trial", "AI Feedback", "Unlimited Lessons"],
     icon: Zap,
   },
   {
-    name: "Fluentist",
+    key: "fluentist",
     price: "$69.99",
     period: "/yr",
-    badge: "Best Value",
-    features: ["Everything in Explorer", "Offline Mode", "Priority AI Support"],
     icon: Crown,
     featured: true,
   },
   {
-    name: "Legacy",
+    key: "legacy",
     price: "$159.99",
     period: "once",
-    features: ["Lifetime Access", "All Future Content", "Exclusive Founder Badge"],
-    icon: InfinityIcon, // Using the aliased icon
+    icon: InfinityIcon,
   },
 ];
 
 export default function PricingBento() {
-  const [active, setActive] = useState(1); // Default to "Best Value"
+  const [active, setActive] = useState(1);
+  const { t } = useLanguage();
+
+  /**
+   * SAFE DYNAMIC TRANSLATION HELPER
+   * (bypasses strict literal union without breaking i18n system)
+   */
+  const tPath = (path: string) => t(path as any);
 
   return (
     <section className="py-24 px-4 bg-transparent relative overflow-hidden">
@@ -46,10 +50,10 @@ export default function PricingBento() {
         {/* HEADER */}
         <div className="text-center mb-12 space-y-4">
           <h2 className="text-3xl md:text-5xl font-black text-[#162B6E] tracking-tight">
-            Choose your path
+            {t("pricing.title")}
           </h2>
           <p className="text-base text-slate-500 font-medium">
-            Start with a 7-day free trial. Unlock your heritage today.
+            {t("pricing.subtitle")}
           </p>
         </div>
 
@@ -74,43 +78,63 @@ export default function PricingBento() {
                   }`}
                 >
                   {/* BADGE */}
-                  {plan.badge && (
+                  {plan.featured && (
                     <div className="absolute -top-4 left-8 text-[10px] font-black uppercase tracking-[0.2em] bg-white text-[#24A5EE] px-4 py-1.5 rounded-full shadow-lg border border-[#24A5EE]/10">
-                      {plan.badge}
+                      {t("pricing.badgeBestValue")}
                     </div>
                   )}
 
                   {/* ICON */}
-                  <div className={`mb-6 w-12 h-12 flex items-center justify-center rounded-2xl ${
-                    isActive ? "bg-white/20" : "bg-[#EFF6FF]"
-                  }`}>
-                    <plan.icon size={22} className={isActive ? "text-white" : "text-[#24A5EE]"} />
+                  <div
+                    className={`mb-6 w-12 h-12 flex items-center justify-center rounded-2xl ${
+                      isActive ? "bg-white/20" : "bg-[#EFF6FF]"
+                    }`}
+                  >
+                    <plan.icon
+                      size={22}
+                      className={isActive ? "text-white" : "text-[#24A5EE]"}
+                    />
                   </div>
 
                   {/* CONTENT */}
                   <h3 className="font-black text-xl mb-2 tracking-tight">
-                    {plan.name}
+                    {tPath(`pricing.plans.${plan.key}.name`)}
                   </h3>
 
                   <div className="mb-6">
                     <span className="text-4xl font-black italic">
                       {plan.price}
                     </span>
-                    <span className={`ml-1 text-sm font-bold uppercase tracking-widest ${isActive ? "text-white/70" : "text-slate-400"}`}>
+                    <span
+                      className={`ml-1 text-sm font-bold uppercase tracking-widest ${
+                        isActive ? "text-white/70" : "text-slate-400"
+                      }`}
+                    >
                       {plan.period}
                     </span>
                   </div>
 
                   {/* FEATURES */}
                   <ul className="space-y-4 text-sm font-medium">
-                    {plan.features.map((f, idx) => (
-                      <li key={idx} className="flex items-center gap-3">
-                        <div className={`rounded-full p-0.5 ${isActive ? "bg-white/20" : "bg-[#24A5EE]/10"}`}>
-                          <Check size={14} className={isActive ? "text-white" : "text-[#24A5EE]"} />
-                        </div>
-                        {f}
-                      </li>
-                    ))}
+                    {tPath(`pricing.plans.${plan.key}.features`)
+                      .split("|")
+                      .map((f: string, idx: number) => (
+                        <li key={idx} className="flex items-center gap-3">
+                          <div
+                            className={`rounded-full p-0.5 ${
+                              isActive ? "bg-white/20" : "bg-[#24A5EE]/10"
+                            }`}
+                          >
+                            <Check
+                              size={14}
+                              className={
+                                isActive ? "text-white" : "text-[#24A5EE]"
+                              }
+                            />
+                          </div>
+                          {f}
+                        </li>
+                      ))}
                   </ul>
                 </div>
               </motion.div>
@@ -120,9 +144,9 @@ export default function PricingBento() {
 
         {/* PRIMARY CTA */}
         <div className="max-w-lg mx-auto mt-10">
-          <AnimatedCTA planName={plans[active].name} />
+          <AnimatedCTA planName={plans[active].key} />
           <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mt-6 opacity-60">
-            Secure checkout • Instant Activation
+            {t("pricing.footer")}
           </p>
         </div>
       </div>
@@ -132,6 +156,9 @@ export default function PricingBento() {
 
 function AnimatedCTA({ planName }: { planName: string }) {
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
+
+  const tPath = (path: string) => t(path as any);
 
   const handleClick = () => {
     setLoading(true);
@@ -145,7 +172,6 @@ function AnimatedCTA({ planName }: { planName: string }) {
       whileHover={{ scale: 1.02 }}
       className="relative w-full py-5 rounded-[22px] bg-[#162B6E] text-white font-black text-lg tracking-tight overflow-hidden flex items-center justify-center gap-3 group shadow-2xl shadow-blue-900/20"
     >
-      {/* SHIMMER EFFECT */}
       <motion.div
         initial={{ x: "-150%" }}
         animate={{ x: "150%" }}
@@ -158,7 +184,12 @@ function AnimatedCTA({ planName }: { planName: string }) {
       />
 
       <span className="relative z-10 flex items-center gap-3">
-        {loading ? "Initializing..." : `Get ${planName} Access`}
+        {loading
+          ? t("pricing.loading")
+          : `${t("pricing.ctaPrefix")} ${tPath(
+              `pricing.plans.${planName}.name`
+            )} ${t("pricing.ctaSuffix")}`}
+
         <motion.div
           animate={{ x: [0, 5, 0] }}
           transition={{ repeat: Infinity, duration: 1.5 }}

@@ -30,7 +30,7 @@ export async function getUserDashboardData(providerId: string) {
     return {
       user: {
         name: displayName,
-        avatarUrl: user.avatarUrl ?? "/default-avatar.png",
+        image: user.image ?? "/default-avatar.png",
         role: "Learner",
         subscription: user.subscription?.status ?? "FREE",
       },

@@ -12,12 +12,30 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/i18n/language-context";
 
-const features = [
+/* =========================
+   TYPES
+========================= */
+type FeatureTagKey = "chat" | "speak" | "stories" | "connect";
+
+type Feature = {
+  icon: React.ElementType;
+  title: string;
+  tagKey: FeatureTagKey;
+  mascot: string;
+  gradient: string;
+  delay: number;
+};
+
+/* =========================
+   DATA
+========================= */
+const features: Feature[] = [
   {
     icon: BotMessageSquare,
     title: "Ọ̀rẹ́",
-    tag: "Chat",
+    tagKey: "chat",
     mascot: "/mascots/Ore.png",
     gradient: "from-[#162B6E] to-[#24A5EE]",
     delay: 0.1,
@@ -25,7 +43,7 @@ const features = [
   {
     icon: Mic,
     title: "Pàrà",
-    tag: "Speak",
+    tagKey: "speak",
     mascot: "/mascots/Para.png",
     gradient: "from-[#24A5EE] to-[#38bdf8]",
     delay: 0.2,
@@ -33,7 +51,7 @@ const features = [
   {
     icon: BookOpenText,
     title: "Òwe",
-    tag: "Stories",
+    tagKey: "stories",
     mascot: "/mascots/Owe.png",
     gradient: "from-[#059669] to-[#34d399]",
     delay: 0.3,
@@ -41,40 +59,41 @@ const features = [
   {
     icon: UsersRound,
     title: "Connect",
-    tag: "Connect",
+    tagKey: "connect",
     mascot: "/zabbot-community.png",
     gradient: "from-[#6366f1] to-[#8b5cf6]",
     delay: 0.4,
   },
 ];
 
+/* =========================
+   MAIN COMPONENT
+========================= */
 export default function FeaturesGrid() {
+  const { t } = useLanguage();
+
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       <div className="max-w-6xl mx-auto text-center">
-
         {/* HEADER */}
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 text-[#24A5EE] text-xs font-bold uppercase tracking-widest mb-3">
-            <Sparkles size={14} />
-            Experience
+            <Sparkles size={14} aria-hidden />
+            {t("features.experience")}
           </div>
 
           <h2 className="text-2xl md:text-4xl font-extrabold text-[#162B6E] leading-tight mx-auto max-w-sm">
-            Learn visually. Speak naturally.
+            {t("features.title")}
           </h2>
         </div>
 
-        {/* 🌟 BORDERED MODULE CONTAINER */}
+        {/* CONTAINER */}
         <div className="relative rounded-[34px] border border-[#24A5EE]/20 bg-white/40 backdrop-blur-xl shadow-[0_20px_60px_rgba(22,43,110,0.08)] px-4 md:px-6 py-6 md:py-10">
-
-          {/* soft glow ring */}
           <div className="absolute inset-0 rounded-[34px] pointer-events-none ring-1 ring-[#24A5EE]/10" />
 
-          {/* GRID */}
           <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-5 overflow-x-auto md:overflow-visible pb-2 scrollbar-hide relative z-10">
-            {features.map((feature, index) => (
-              <FeatureCard key={index} {...feature} />
+            {features.map((feature) => (
+              <FeatureCard key={feature.tagKey} {...feature} />
             ))}
           </div>
         </div>
@@ -89,46 +108,51 @@ export default function FeaturesGrid() {
 function FeatureCard({
   icon: Icon,
   title,
-  tag,
+  tagKey,
   mascot,
   gradient,
   delay,
-}: any) {
+}: Feature) {
   const router = useRouter();
+  const { t } = useLanguage();
 
-  const handleClick = () => {
-    router.push("/dashboard");
-  };
+  // ✅ Type-safe dynamic key
+  const tagTranslationKey = `features.tags.${tagKey}` as const;
 
   return (
     <motion.div
-      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push("/dashboard")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") router.push("/dashboard");
+      }}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}
       viewport={{ once: true }}
       whileHover={{ y: -8 }}
-      className="min-w-[260px] md:min-w-0 group cursor-pointer"
+      className="min-w-[260px] md:min-w-0 group cursor-pointer focus:outline-none"
     >
       <div
         className={`relative h-[340px] rounded-[28px] overflow-hidden bg-gradient-to-br ${gradient} p-5 flex flex-col justify-between shadow-xl`}
       >
-        {/* BACKGROUND BLOBS */}
+        {/* BACKGROUND */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
 
         {/* TOP */}
         <div className="flex justify-between items-start z-10">
           <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl text-white">
-            <Icon size={20} />
+            <Icon size={20} aria-hidden />
           </div>
 
           <span className="text-[10px] text-white/80 font-bold uppercase tracking-widest">
-            {tag}
+            {t(tagTranslationKey)}
           </span>
         </div>
 
-        {/* CENTER MASCOT */}
+        {/* MASCOT */}
         <motion.div
           animate={{ y: [0, -6, 0] }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
@@ -136,7 +160,7 @@ function FeatureCard({
         >
           <Image
             src={mascot}
-            alt={title}
+            alt={`${title} mascot`}
             fill
             className="object-contain drop-shadow-2xl"
           />
@@ -148,25 +172,25 @@ function FeatureCard({
             {title}
           </h3>
 
-          {/* CTA */}
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
-            className="relative overflow-hidden w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer"
+            className="relative overflow-hidden w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-4 py-3 transition-all duration-300"
           >
-            {/* SHINE EFFECT */}
             <span className="absolute inset-0 overflow-hidden rounded-xl">
               <span className="absolute -left-1/2 top-0 h-full w-1/2 bg-white/30 blur-md rotate-12 translate-x-0 group-hover:translate-x-[200%] transition-transform duration-700" />
             </span>
 
-            <span className="relative z-10">Open</span>
+            <span className="relative z-10">
+              {t("features.open")}
+            </span>
 
             <motion.span
               className="relative z-10 flex items-center"
               whileHover={{ x: 3, y: -3 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <ArrowUpRight size={14} />
+              <ArrowUpRight size={14} aria-hidden />
             </motion.span>
           </motion.div>
         </div>

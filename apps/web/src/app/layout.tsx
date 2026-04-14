@@ -1,11 +1,11 @@
-// /app/layout.tsx
 import type { Metadata } from "next";
 import { Inter, Lexend, Lexend_Exa } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "sonner";
 import GlobalHeader from "@/components/layout/GlobalHeader";
-import { AuthProvider } from "@/components/auth/AuthProvider"; // ✅ ADD THIS
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { LanguageProvider } from "@/i18n/language-context";
 
 // =========================
 // FONTS
@@ -57,19 +57,24 @@ export default function RootLayout({
       className={`${inter.variable} ${lexend.variable} ${lexendExa.variable} h-full`}
     >
       <body className="antialiased min-h-screen flex flex-col font-sans bg-background text-foreground">
-        
+
         <Providers>
 
-          {/* 🔥 AUTH PROVIDER WRAPS APP SHELL */}
+          {/* 🔥 AUTH SCOPE */}
           <AuthProvider>
 
-            <GlobalHeader />
+            {/* 🌍 LANGUAGE SCOPE (GLOBAL I18N LAYER) */}
+            <LanguageProvider>
 
-            <main className="flex-1 pt-24 relative">
-              {children}
-            </main>
+              <GlobalHeader />
 
-            <Toaster position="top-center" richColors closeButton />
+              <main className="flex-1 pt-24 relative">
+                {children}
+              </main>
+
+              <Toaster position="top-center" richColors closeButton />
+
+            </LanguageProvider>
 
           </AuthProvider>
 

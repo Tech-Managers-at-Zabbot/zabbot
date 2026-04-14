@@ -3,22 +3,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Zap,
   Menu,
   X,
   Home,
-  MessageCircle,
-  Library,
   Settings,
   User,
   LogOut,
   Star,
   LogIn,
+  Globe,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useAuth } from "@/components/auth/AuthProvider"; // ✅ NEW
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useLanguage } from "@/i18n/language-context";
 
 /* STREAK */
 function StreakIndicator({ currentStreak }: { currentStreak: number }) {
@@ -39,19 +38,25 @@ export default function GlobalHeader() {
   const isSignedIn = status === "authenticated";
   const displayName = session?.user?.name || "User";
 
-  const { setView } = useAuth(); // ✅ NEW
+  const { setView } = useAuth();
 
+  // ✅ GLOBAL LANGUAGE
+  const { language, setLanguage, t } = useLanguage();
+
+  /* SIGN OUT */
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/" });
     setIsMenuOpen(false);
   };
 
+  /* STREAK */
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     setStreak(isSignedIn ? 5 : 0);
   }, [isSignedIn]);
 
+  /* SCROLL + OUTSIDE CLICK */
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
 
@@ -90,22 +95,14 @@ export default function GlobalHeader() {
         <motion.div
           layout
           className={`
-            relative
-            max-w-7xl mx-auto flex items-center justify-between
-            rounded-[22px]
-            px-4 py-2
-            border border-white/40
-            shadow-lg
-            backdrop-blur-3xl
-            bg-white/50
-            overflow-visible
+            relative max-w-7xl mx-auto flex items-center justify-between
+            rounded-[22px] px-4 py-2
+            border border-white/40 shadow-lg
+            backdrop-blur-3xl bg-white/50
             transition-all duration-500
             ${scrolled ? "bg-white/70 shadow-xl" : "bg-white/40"}
           `}
         >
-          {/* GLASS LAYER */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-transparent pointer-events-none rounded-[22px]" />
-
           {/* LOGO */}
           <Link
             href="/"
@@ -122,7 +119,38 @@ export default function GlobalHeader() {
 
           {/* ACTIONS */}
           <div className="relative flex items-center gap-2.5 z-10" ref={menuRef}>
+            
+            {/* 🌍 LANGUAGE TOGGLE */}
+            <button
+              onClick={() =>
+                setLanguage(language === "en" ? "yo" : "en")
+              }
+              aria-label="Toggle language"
+              className="
+                flex items-center gap-2 px-3 py-2 rounded-xl
+                bg-white/60 backdrop-blur-xl
+                border border-white/60
+                text-[10px] font-black uppercase tracking-wider
+                text-[#162B6E]
+                hover:bg-white/80 transition-all duration-300
+              "
+            >
+              <Globe size={14} className="text-[#24A5EE]" />
 
+              <span className="flex items-center gap-1">
+                <span className={language === "en" ? "text-[#24A5EE]" : "text-slate-400"}>
+                  EN
+                </span>
+
+                <span className="text-slate-300">/</span>
+
+                <span className={language === "yo" ? "text-[#24A5EE]" : "text-slate-400"}>
+                  YO
+                </span>
+              </span>
+            </button>
+
+            {/* AUTH */}
             {isSignedIn ? (
               <Link href="/dashboard">
                 <motion.button
@@ -130,63 +158,24 @@ export default function GlobalHeader() {
                   whileTap={{ scale: 0.97 }}
                   className="px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-2 text-[#162B6E] bg-white border border-slate-100"
                 >
-                  Dashboard <Home size={12} />
+                  {t("nav.dashboard")} <Home size={12} />
                 </motion.button>
               </Link>
             ) : (
-              <div className="flex items-center gap-2">
-
-                <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setView("login")}
-                  className="
-                    px-4 py-2 rounded-xl font-black text-[10px]
-                    uppercase tracking-wider flex items-center gap-2
-                    text-[#162B6E] bg-white/50 backdrop-blur-xl
-                    border border-white/60
-                    hover:bg-white/70 transition-all duration-300
-                  "
-                >
-                  Login <LogIn size={12} />
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setView("signup")}
-                  className="
-                    px-4 py-2 rounded-xl font-black text-[10px]
-                    uppercase tracking-wider flex items-center gap-2
-                    text-[#162B6E] bg-white/40 backdrop-blur-xl
-                    border border-orange-300/60
-                    shadow-[0_8px_30px_rgba(22,43,110,0.08)]
-                    hover:bg-white/60 hover:border-orange-400/80
-                    hover:shadow-[0_10px_40px_rgba(22,43,110,0.12),0_0_25px_rgba(251,146,60,0.25)]
-                    hover:-translate-y-[1px]
-                    transition-all duration-300
-                  "
-                >
-                  Start Free Trial <Zap size={12} />
-                </motion.button>
-
-              </div>
-            )}
-
-            {/* GAMIFICATION */}
-            {isSignedIn && (
-              <div className="hidden sm:flex items-center gap-2 opacity-90">
-                <StreakIndicator currentStreak={streak} />
-
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
-                  <Star size={12} className="text-blue-500" />
-                  120 XP
-                </div>
-
-                <div className="px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-bold border border-green-100">
-                  Lvl 3
-                </div>
-              </div>
+              <motion.button
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setView("login")}
+                className="
+                  px-4 py-2 rounded-xl font-black text-[10px]
+                  uppercase tracking-wider flex items-center gap-2
+                  text-[#162B6E] bg-white/50 backdrop-blur-xl
+                  border border-white/60
+                  hover:bg-white/70 transition-all duration-300
+                "
+              >
+                {t("nav.login")} <LogIn size={12} />
+              </motion.button>
             )}
 
             {/* MENU BUTTON */}
@@ -196,21 +185,11 @@ export default function GlobalHeader() {
             >
               <AnimatePresence mode="wait">
                 {isMenuOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                  >
+                  <motion.div key="close">
                     <X size={20} className="text-[#162B6E]" />
                   </motion.div>
                 ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                  >
+                  <motion.div key="menu">
                     <Menu size={20} className="text-[#162B6E]" />
                   </motion.div>
                 )}
@@ -226,7 +205,7 @@ export default function GlobalHeader() {
                   exit={{ opacity: 0, y: 16, scale: 0.96 }}
                   className="absolute top-full right-0 mt-3 w-[280px] rounded-[24px] bg-white/95 backdrop-blur-2xl border border-white shadow-2xl overflow-hidden p-2 z-[9999]"
                 >
-                  {/* USER CARD */}
+                  {/* USER */}
                   <div className="p-4 rounded-[18px] bg-white/60 mb-2 border border-white/40">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
@@ -238,41 +217,32 @@ export default function GlobalHeader() {
                           {displayName}
                         </p>
                         <p className="text-[9px] font-bold text-blue-500 uppercase mt-1">
-                          {isSignedIn ? "Premium Learner" : "Guest"}
+                          {isSignedIn ? t("auth.welcomeBack") : t("auth.createAccount")}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* ===================== */}
-                  {/* UPDATED DROPDOWN NAV */}
-                  {/* ===================== */}
                   <nav className="flex flex-col gap-1">
-                    <DropdownLink icon={<Home size={16} />} label="Home" href="/" />
+                    <DropdownLink icon={<Home size={16} />} label={t("nav.home")} href="/" />
 
-                    {/* LOCKED: AI Tutor */}
-                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
-                      <span className="text-slate-300">🔒</span>
-                      AI Tutor
+                    <div className="px-5 py-3 text-xs text-slate-300 font-bold opacity-60">
+                      🔒 AI Tutor
                     </div>
 
-                    {/* LOCKED: Curriculum */}
-                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
-                      <span className="text-slate-300">🔒</span>
-                      Curriculum
+                    <div className="px-5 py-3 text-xs text-slate-300 font-bold opacity-60">
+                      🔒 Curriculum
                     </div>
 
-                    {/* LOCKED: Get A Coach */}
-                    <div className="flex items-center gap-4 px-5 py-3 rounded-2xl text-slate-300 font-bold text-xs opacity-60 cursor-not-allowed">
-                      <span className="text-slate-300">🔒</span>
-                      Get A Coach
+                    <div className="px-5 py-3 text-xs text-slate-300 font-bold opacity-60">
+                      🔒 Get A Coach
                     </div>
 
                     <div className="h-px bg-slate-100 my-2 mx-3" />
 
                     {isSignedIn ? (
                       <>
-                        <DropdownLink icon={<Settings size={16} />} label="Settings" href="/settings" />
+                        <DropdownLink icon={<Settings size={16} />} label={t("nav.settings")} href="/settings" />
                         <button
                           onClick={handleSignOut}
                           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-500 text-xs hover:bg-red-50"
@@ -290,14 +260,13 @@ export default function GlobalHeader() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-600 text-xs hover:bg-blue-50"
                       >
                         <User size={16} />
-                        Sign In
+                        {t("nav.signIn")}
                       </button>
                     )}
                   </nav>
                 </motion.div>
               )}
             </AnimatePresence>
-
           </div>
         </motion.div>
       </header>
@@ -305,7 +274,7 @@ export default function GlobalHeader() {
   );
 }
 
-/* Dropdown Link */
+/* DROPDOWN LINK */
 function DropdownLink({
   icon,
   label,
