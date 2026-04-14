@@ -4,17 +4,21 @@ import { useState } from "react";
 import Image from "next/image";
 import { useAuth } from "./AuthProvider";
 import { X, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export default function SignupForm() {
   const { setView } = useAuth();
-  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // =========================
+  // UX STATE (NEW)
+  // =========================
+  const [successState, setSuccessState] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -65,28 +69,36 @@ export default function SignupForm() {
       }
 
       // =========================
-      // SUCCESS FLOW (NO AUTO LOGIN)
+      // 🚀 STOP LOGIN FLOW (NEW UX)
       // =========================
-      setView(null);
-
-      router.push("/verify?status=sent");
+      setUserEmail(email);
+      setSuccessState(true);
+      setLoading(false);
+      return;
 
     } catch (err) {
       console.error("SIGNUP_ERROR:", err);
       setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
-  return (
-    <div className="relative">
+  // =========================
+  // SUCCESS SCREEN (NEW UX STATE)
+  // =========================
+  if (successState) {
+    return (
+      <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 text-center overflow-hidden">
 
-      <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 overflow-hidden">
+        {/* CLOSE */}
+        <button
+          onClick={() => setView(null)}
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/60 hover:bg-white/80 transition"
+        >
+          <X size={16} />
+        </button>
 
-        {/* =========================
-            MASCOT
-        ========================= */}
+        {/* MASCOT */}
         <div className="flex justify-center mb-4">
           <div className="w-14 h-14 rounded-full bg-white/80 shadow-md border border-white/60 flex items-center justify-center overflow-hidden">
             <Image
@@ -95,10 +107,43 @@ export default function SignupForm() {
               width={40}
               height={40}
               className="object-contain"
-              priority
             />
           </div>
         </div>
+
+        <h2 className="text-xl font-semibold mb-2">
+          Check your email 📩
+        </h2>
+
+        <p className="text-sm text-gray-600 mb-2">
+          We’ve sent a verification link to:
+        </p>
+
+        <p className="font-medium text-[#24A5EE] mb-4">
+          {userEmail}
+        </p>
+
+        <p className="text-xs text-gray-500 mb-6">
+          If you don’t see it, check spam or promotions folder.
+        </p>
+
+        <button
+          onClick={() => setView("login")}
+          className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold"
+        >
+          Go to Login
+        </button>
+      </div>
+    );
+  }
+
+  // =========================
+  // NORMAL SIGNUP FORM
+  // =========================
+  return (
+    <div className="relative">
+
+      <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 overflow-hidden">
 
         {/* CLOSE BUTTON */}
         <button

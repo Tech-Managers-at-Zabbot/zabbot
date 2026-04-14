@@ -41,26 +41,16 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          // ✅ Proper normalization INSIDE scope
           const email = normalizeEmail(credentials.email);
 
           const user = await prisma.user.findUnique({
             where: { email },
           });
 
-          /**
-           * 🚨 HARDENING (as requested)
-           */
-          if (!user) {
-            console.warn("AUTH: user not found", email);
-            return null;
-          }
+          if (!user) return null;
 
           if (!user.password) {
-            console.warn(
-              "AUTH: OAuth user attempted credentials login",
-              email
-            );
+            console.warn("AUTH: OAuth user attempted credentials login", email);
             return null;
           }
 
@@ -69,10 +59,7 @@ export const authOptions: NextAuthOptions = {
             user.password
           );
 
-          if (!isValid) {
-            console.warn("AUTH: invalid password", email);
-            return null;
-          }
+          if (!isValid) return null;
 
           return {
             id: user.id,
@@ -80,6 +67,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             role: user.role,
             image: user.image,
+            emailVerified: user.emailVerified, // ✅ IMPORTANT ADDITION
           };
         } catch (err) {
           console.error("AUTH ERROR (authorize):", err);
@@ -107,6 +95,10 @@ export const authOptions: NextAuthOptions = {
           (user as any).avatarUrl ||
           (user as any).image ||
           null;
+
+        // ✅ ADD EMAIL VERIFIED TO TOKEN
+        token.emailVerified =
+          (user as any).emailVerified ?? null;
       }
 
       /**
@@ -128,6 +120,10 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).email = token.email;
         (session.user as any).role = token.role;
         (session.user as any).avatar = token.avatar;
+
+        // ✅ ADD EMAIL VERIFIED TO SESSION
+        (session.user as any).emailVerified =
+          token.emailVerified ?? null;
       }
 
       return session;

@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { verificationEmailTemplate } from "@/lib/emails/verification-email";
 import { sendEmail } from "@/lib/email";
 
-const normalizeEmail = (email: string) => email.toLowerCase().trim();
+const normalizeEmail = (email: string) =>
+  email.toLowerCase().trim();
 
-// Basic email validation
 const validateEmail = (email: string) => {
   return String(email)
     .toLowerCase()
     .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
 };
 
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     // =========================
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Missing fields" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
     }
@@ -62,13 +62,10 @@ export async function POST(req: Request) {
     }
 
     // =========================
-    // 3. HASH PASSWORD
+    // 3. CREATE USER
     // =========================
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // =========================
-    // 4. CREATE USER
-    // =========================
     const user = await prisma.user.create({
       data: {
         email: normalizedEmail,
@@ -76,35 +73,37 @@ export async function POST(req: Request) {
         name: name?.trim() || null,
         role: "USER",
         status: "ACTIVE",
+        xp: 0,
+        hearts: 5,
+        isOnboarded: false,
         emailVerified: null,
       },
     });
 
     // =========================
-    // 5. CLEAN OLD TOKENS (SAFETY)
+    // 4. CLEAN OLD TOKENS (SAFETY)
     // =========================
-    await prisma.emailVerificationToken.deleteMany({
-      where: { userId: user.id },
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: normalizedEmail },
     });
 
     // =========================
-    // 6. GENERATE TOKEN
+    // 5. GENERATE TOKEN
     // =========================
     const token = crypto.randomBytes(32).toString("hex");
 
-    const expires = new Date();
-    expires.setHours(expires.getHours() + 1);
+    const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
 
-    await prisma.emailVerificationToken.create({
+    await prisma.verificationToken.create({
       data: {
+        identifier: normalizedEmail,
         token,
-        userId: user.id,
         expires,
       },
     });
 
     // =========================
-    // 7. BUILD VERIFY URL
+    // 6. VERIFY URL
     // =========================
     const baseUrl = process.env.NEXTAUTH_URL;
 
@@ -115,10 +114,10 @@ export async function POST(req: Request) {
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
 
     // =========================
-    // 8. SEND EMAIL
+    // 7. SEND EMAIL
     // =========================
     await sendEmail({
-      to: user.email,
+      to: normalizedEmail,
       subject: "Verify your Zabbot account 🚀",
       html: verificationEmailTemplate({
         name: user.name ?? "Learner",
@@ -127,15 +126,18 @@ export async function POST(req: Request) {
     });
 
     // =========================
-    // 9. RESPONSE
+    // 8. UX-FIRST RESPONSE
     // =========================
     return NextResponse.json(
       {
         success: true,
-        message: "Verification email sent",
+        message: "Account created successfully. Verification email sent.",
+        requiresVerification: true,
+        email: normalizedEmail,
       },
       { status: 201 }
     );
+
   } catch (err) {
     console.error("SIGNUP_API_ERROR:", err);
 
