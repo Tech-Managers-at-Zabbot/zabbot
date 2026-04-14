@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { useAuth } from "./AuthProvider";
 import { X, Eye, EyeOff } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function SignupForm() {
@@ -17,14 +16,21 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ NEW STATE
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
 
+    // =========================
+    // BASIC VALIDATION
+    // =========================
     if (!email || !password) {
       setError("Email and password are required");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
@@ -32,7 +38,9 @@ export default function SignupForm() {
     setError("");
 
     try {
-      // 1. Create user in DB
+      // =========================
+      // SIGNUP REQUEST
+      // =========================
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -47,29 +55,25 @@ export default function SignupForm() {
 
       const data = await res.json();
 
-      // error handling
+      // =========================
+      // ERROR HANDLING
+      // =========================
       if (!res.ok) {
         setError(data?.error || "Signup failed");
         setLoading(false);
         return;
       }
 
-      // 2. AUTO LOGIN
-      const loginRes = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      // =========================
+      // SUCCESS FLOW (NO AUTO LOGIN)
+      // =========================
+      setView(null);
 
-      if (loginRes?.ok) {
-        setView(null);
-        router.push("/dashboard");
-        return;
-      }
+      router.push("/verify?status=sent");
 
-      setView("login");
     } catch (err) {
-      setError("Something went wrong. Try again.");
+      console.error("SIGNUP_ERROR:", err);
+      setError("Something went wrong. Please try again.");
     }
 
     setLoading(false);
@@ -80,7 +84,9 @@ export default function SignupForm() {
 
       <div className="relative bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 overflow-hidden">
 
-        {/* MASCOT */}
+        {/* =========================
+            MASCOT
+        ========================= */}
         <div className="flex justify-center mb-4">
           <div className="w-14 h-14 rounded-full bg-white/80 shadow-md border border-white/60 flex items-center justify-center overflow-hidden">
             <Image
@@ -94,7 +100,7 @@ export default function SignupForm() {
           </div>
         </div>
 
-        {/* CLOSE */}
+        {/* CLOSE BUTTON */}
         <button
           onClick={() => setView(null)}
           className="absolute top-2 right-2 p-2 rounded-full bg-white/60 hover:bg-white/80 transition"
@@ -102,7 +108,7 @@ export default function SignupForm() {
           <X size={16} />
         </button>
 
-        {/* HEADER */}
+        {/* TITLE */}
         <h2 className="text-xl font-semibold text-center mb-4">
           Create account
         </h2>
@@ -117,6 +123,7 @@ export default function SignupForm() {
         {/* FORM */}
         <form onSubmit={handleSignup} className="space-y-3">
 
+          {/* EMAIL */}
           <input
             type="email"
             disabled={loading}
@@ -126,7 +133,7 @@ export default function SignupForm() {
             className="w-full p-3 rounded-xl bg-white/70 border outline-none focus:ring-2 focus:ring-[#24A5EE]"
           />
 
-          {/* PASSWORD WITH VISIBILITY TOGGLE */}
+          {/* PASSWORD */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -142,24 +149,21 @@ export default function SignupForm() {
               onClick={() => setShowPassword((prev) => !prev)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black"
             >
-              {showPassword ? (
-                <EyeOff size={18} />
-              ) : (
-                <Eye size={18} />
-              )}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={loading}
             className="w-full py-3 rounded-xl bg-green-500 text-white font-semibold disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Sign Up"}
+            {loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
-        {/* FOOTER */}
+        {/* LOGIN LINK */}
         <p className="text-xs text-center mt-3">
           Already have an account?{" "}
           <button onClick={() => setView("login")} className="underline">

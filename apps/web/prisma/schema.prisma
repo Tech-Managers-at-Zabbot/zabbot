@@ -66,6 +66,8 @@ model User {
   accounts       Account[]
   sessions       Session[]
 
+  emailVerificationTokens EmailVerificationToken[]
+
   activityLogs   ActivityLog[]
   attempts       Attempt[]
   auditLogs      AuditLog[] @relation("Initiator")
@@ -258,24 +260,28 @@ model UserJourneyProgress {
 }
 
 model Vocabulary {
-  id                 String                   @id @default(uuid())
-  yorubaWord         String                   @unique
-  englishTranslation String                   @default("")
+  id                 String   @id @default(uuid())
+  yorubaWord         String   @unique
+  englishTranslation String   @default("")
   exampleSentence    String?
   tones              String?
   maleAudioUrl       String?
   femaleAudioUrl     String?
-  createdAt          DateTime                 @default(now())
-  updatedAt          DateTime                 @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
   deletedAt          DateTime?
+
   sparkId            String?
+
   phonemeStamps      PhonemeStamp[]
-  SparkVocabulary    SparkVocabulary[]
+  sparkVocabulary    SparkVocabulary[]  
   userProgress       UserVocabularyProgress[]
-  spark              Spark?                   @relation(fields: [sparkId], references: [id], onDelete: Cascade)
+
+  spark              Spark? @relation(fields: [sparkId], references: [id], onDelete: Cascade)
 
   @@index([sparkId])
   @@index([yorubaWord])
+  @@index([sparkId, yorubaWord])
 }
 
 model Session {
@@ -286,6 +292,19 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model EmailVerificationToken {
+  id      String   @id @default(cuid())
+  token   String   @unique
+  userId  String
+  expires DateTime
+
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expires])
 }
 
 model VerificationToken {
